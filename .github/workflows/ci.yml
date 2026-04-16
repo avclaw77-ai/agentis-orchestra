@@ -1,0 +1,159 @@
+# =============================================================================
+# AgentisOrchestra -- CI Pipeline
+# Runs on every push and pull request
+# =============================================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9"
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: |
+            app/pnpm-lock.yaml
+            bridge/pnpm-lock.yaml
+
+      - name: Install app dependencies
+        working-directory: app
+        run: pnpm install --frozen-lockfile
+
+      - name: Install bridge dependencies
+        working-directory: bridge
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint app
+        working-directory: app
+        run: pnpm lint
+
+      - name: Type check app
+        working-directory: app
+        run: pnpm exec tsc --noEmit
+
+      - name: Type check bridge
+        working-directory: bridge
+        run: pnpm exec tsc --noEmit
+
+  build-app:
+    name: Build App
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: agentis_orchestra
+          POSTGRES_USER: agentis
+          POSTGRES_PASSWORD: ci_test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U agentis"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: app/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: app
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        working-directory: app
+        env:
+          DATABASE_URL: postgres://agentis:ci_test_password@localhost:5432/agentis_orchestra
+        run: pnpm build
+
+  build-bridge:
+    name: Build Bridge
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: bridge/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: bridge
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        working-directory: bridge
+        run: pnpm build
+
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [build-app, build-bridge]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build app image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./app
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build bridge image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./bridge
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Verify compose config
+        run: docker compose config --quiet

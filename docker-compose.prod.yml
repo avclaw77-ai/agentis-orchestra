@@ -1,0 +1,198 @@
+# =============================================================================
+# AgentisOrchestra -- Production Docker Compose
+# Usage: docker compose -f docker-compose.prod.yml up -d
+#
+# Differences from dev compose:
+#   - No DB port exposure (internal network only)
+#   - Resource limits enforced
+#   - Log rotation configured
+#   - Caddy reverse proxy for SSL termination
+#   - Production restart policies
+#   - No pgadmin
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Caddy -- Reverse proxy with automatic HTTPS
+  # Set DOMAIN in .env to your domain (e.g., orchestra.example.com)
+  # ---------------------------------------------------------------------------
+  caddy:
+    image: caddy:2-alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"   # HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - orchestra
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.25"
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL -- Internal only, no exposed ports
+  # ---------------------------------------------------------------------------
+  db:
+    image: pgvector/pgvector:pg16
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME:-agentis_orchestra}
+      POSTGRES_USER: ${DB_USER:-agentis}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    # No ports exposed -- internal network only
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-agentis}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - orchestra
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ---------------------------------------------------------------------------
+  # Bridge -- Agent execution engine
+  # ---------------------------------------------------------------------------
+  bridge:
+    image: ${BRIDGE_IMAGE:-agentis-orchestra-bridge:current}
+    build:
+      context: ./bridge
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      PORT: 3847
+      MCP_PORT: 3848
+      DATABASE_URL: postgres://${DB_USER:-agentis}:${DB_PASSWORD}@db:5432/${DB_NAME:-agentis_orchestra}
+      BRIDGE_TOKEN: ${BRIDGE_TOKEN}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      CLAUDE_CLI_PATH: ${CLAUDE_CLI_PATH:-/usr/local/bin/claude}
+      ADAPTER_MODE: ${ADAPTER_MODE:-sdk}
+      NODE_ENV: production
+    # No ports exposed -- only accessible via internal network
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - bridge_uploads:/tmp/studio-uploads
+      - ./plugins:/app/plugins:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3847/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - orchestra
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+  # ---------------------------------------------------------------------------
+  # App -- Next.js web UI + API
+  # ---------------------------------------------------------------------------
+  app:
+    image: ${APP_IMAGE:-agentis-orchestra-app:current}
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-agentis}:${DB_PASSWORD}@db:5432/${DB_NAME:-agentis_orchestra}
+      BRIDGE_URL: http://bridge:3847
+      BRIDGE_TOKEN: ${BRIDGE_TOKEN}
+      AUTH_TOKEN: ${AUTH_TOKEN}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NODE_ENV: production
+    # No ports exposed -- Caddy handles external traffic
+    depends_on:
+      db:
+        condition: service_healthy
+      bridge:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - orchestra
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+networks:
+  orchestra:
+    driver: bridge
+
+volumes:
+  pgdata:
+    name: orchestra_pgdata
+  bridge_uploads:
+    name: orchestra_bridge_uploads
+  caddy_data:
+    name: orchestra_caddy_data
+  caddy_config:
+    name: orchestra_caddy_config
+
+# =============================================================================
+# Required environment variables (set in .env):
+#
+#   DOMAIN              Your domain (e.g., orchestra.yourcompany.com)
+#   DB_PASSWORD         PostgreSQL password (generated by setup.sh)
+#   BRIDGE_TOKEN        Shared secret between app and bridge
+#   AUTH_TOKEN           Admin auth token
+#   ENCRYPTION_KEY      32-byte hex key for AES-256-GCM
+#   NEXTAUTH_SECRET     Session signing secret
+#
+# Optional:
+#   ANTHROPIC_API_KEY   For SDK adapter mode
+#   OPENROUTER_API_KEY  For OpenRouter models
+#   ADAPTER_MODE        cli | sdk | api (default: sdk)
+#   APP_IMAGE           Custom app image tag
+#   BRIDGE_IMAGE        Custom bridge image tag
+#
+# Backup strategy:
+#   - Run: make backup (or ./scripts/backup.sh)
+#   - Cron: 0 3 * * * cd /opt/agentis-orchestra && ./scripts/backup.sh
+#   - Backups are gzipped SQL dumps in ./backups/
+#   - Auto-pruned after 30 days
+#   - For off-site: rsync backups/ to S3/B2/remote
+# =============================================================================

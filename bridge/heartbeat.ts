@@ -471,11 +471,11 @@ class HeartbeatEngine {
   }
 
   private async updateRunStatus(runId: string, status: string): Promise<void> {
-    // Simple status update without finalizing
     try {
-      // Use a raw approach -- just claim with a different status isn't in the schema,
-      // so we'll use the claim mechanism for 'executing' by updating directly
-      // This is safe because we already claimed it
+      const { _sql } = await import("./db.js")
+      const sql = _sql()
+      if (!sql) return
+      await sql`UPDATE heartbeat_runs SET status = ${status} WHERE id = ${runId}`
     } catch (err) {
       console.error("[heartbeat] updateRunStatus error:", err)
     }

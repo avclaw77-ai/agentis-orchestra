@@ -1,4 +1,4 @@
-import { randomBytes, createCipheriv, createDecipheriv, createHash, timingSafeEqual } from "node:crypto"
+import { randomBytes, createCipheriv, createDecipheriv, createHash, scryptSync, timingSafeEqual } from "node:crypto"
 
 const ALGORITHM = "aes-256-gcm"
 const IV_LENGTH = 12
@@ -38,19 +38,20 @@ export function decrypt(encoded: string): string {
   return decipher.update(encrypted) + decipher.final("utf-8")
 }
 
-/** Hash a password with bcrypt-like sha256 + salt. For proper production use bcrypt. */
+/** Hash a password with scrypt (CPU+memory-hard, resistant to GPU attacks). */
 export async function hashPassword(password: string): Promise<string> {
-  const salt = randomBytes(16).toString("hex")
-  const hash = createHash("sha256").update(salt + password).digest("hex")
-  return `${salt}:${hash}`
+  const salt = randomBytes(32)
+  const derived = scryptSync(password, salt, 64, { N: 16384, r: 8, p: 1 })
+  return `${salt.toString("hex")}:${derived.toString("hex")}`
 }
 
-/** Verify a password against a "salt:hash" string. */
+/** Verify a password against a "salt:derivedKey" scrypt string. */
 export async function verifyPassword(password: string, stored: string): Promise<boolean> {
-  const [salt, expectedHash] = stored.split(":")
-  if (!salt || !expectedHash) return false
-  const hash = createHash("sha256").update(salt + password).digest("hex")
-  return timingSafeEqual(Buffer.from(hash, "hex"), Buffer.from(expectedHash, "hex"))
+  const [saltHex, expectedHex] = stored.split(":")
+  if (!saltHex || !expectedHex) return false
+  const salt = Buffer.from(saltHex, "hex")
+  const derived = scryptSync(password, salt, 64, { N: 16384, r: 8, p: 1 })
+  return timingSafeEqual(derived, Buffer.from(expectedHex, "hex"))
 }
 
 /** Generate a random session token. */

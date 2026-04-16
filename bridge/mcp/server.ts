@@ -78,6 +78,8 @@ export class MCPServer {
 
   start(): Promise<void> {
     return new Promise((resolve) => {
+      const bridgeToken = process.env.BRIDGE_TOKEN || ""
+
       this.server = http.createServer((req, res) => {
         // CORS headers
         res.setHeader("Access-Control-Allow-Origin", "*")
@@ -88,6 +90,16 @@ export class MCPServer {
           res.writeHead(204)
           res.end()
           return
+        }
+
+        // Auth check -- require BRIDGE_TOKEN if set
+        if (bridgeToken) {
+          const authHeader = req.headers.authorization?.replace("Bearer ", "")
+          if (authHeader !== bridgeToken) {
+            res.writeHead(401, { "Content-Type": "application/json" })
+            res.end(JSON.stringify({ error: "Unauthorized" }))
+            return
+          }
         }
 
         if (req.method === "GET" && req.url === "/mcp/tools") {

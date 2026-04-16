@@ -1,11 +1,46 @@
+# Dependencies
 node_modules/
+
+# Build output
 .next/
 dist/
+out/
+
+# Environment (keep .env.example)
 .env
 .env.*
 !.env.example
+
+# Logs and PIDs
 *.log
-.pids/
 .logs/
-pgdata/
+.pids/
+
+# Backups (generated locally)
 backups/
+
+# Database volumes
+pgdata/
+
+# Docker volumes (if mounted locally)
+caddy_data/
+caddy_config/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Testing
+coverage/
+
+# Misc
+*.tsbuildinfo
+.vercel
