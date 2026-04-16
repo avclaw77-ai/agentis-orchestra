@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!--
+    AgentisOrchestra Logo Mark
+    A stylized "A" formed by three connected nodes in a hierarchical tree,
+    evoking orchestration, coordination, and multi-agent connectivity.
+    The top node is the conductor (CEO), branching down to agent nodes.
+  -->
+  <defs>
+    <linearGradient id="ao-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1E40AF"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle -- optional, transparent by default -->
+  <!-- Main structure: hierarchical A-shape with connected nodes -->
+
+  <!-- Connection lines (drawn first, behind nodes) -->
+  <!-- Top to bottom-left -->
+  <line x1="256" y1="128" x2="144" y2="336" stroke="url(#ao-grad)" stroke-width="28" stroke-linecap="round"/>
+  <!-- Top to bottom-right -->
+  <line x1="256" y1="128" x2="368" y2="336" stroke="url(#ao-grad)" stroke-width="28" stroke-linecap="round"/>
+  <!-- Crossbar (the A crossbar, also connecting the two lower branches) -->
+  <line x1="184" y1="264" x2="328" y2="264" stroke="url(#ao-grad)" stroke-width="24" stroke-linecap="round"/>
+
+  <!-- Secondary child nodes -- smaller, extending from the bottom nodes -->
+  <!-- Left branch children -->
+  <line x1="144" y1="336" x2="88" y2="408" stroke="url(#ao-grad)" stroke-width="16" stroke-linecap="round" opacity="0.6"/>
+  <line x1="144" y1="336" x2="200" y2="408" stroke="url(#ao-grad)" stroke-width="16" stroke-linecap="round" opacity="0.6"/>
+  <!-- Right branch children -->
+  <line x1="368" y1="336" x2="312" y2="408" stroke="url(#ao-grad)" stroke-width="16" stroke-linecap="round" opacity="0.6"/>
+  <line x1="368" y1="336" x2="424" y2="408" stroke="url(#ao-grad)" stroke-width="16" stroke-linecap="round" opacity="0.6"/>
+
+  <!-- Leaf nodes (agent endpoints) -->
+  <circle cx="88" cy="408" r="20" fill="#0284C7" opacity="0.5"/>
+  <circle cx="200" cy="408" r="20" fill="#0284C7" opacity="0.5"/>
+  <circle cx="312" cy="408" r="20" fill="#0284C7" opacity="0.5"/>
+  <circle cx="424" cy="408" r="20" fill="#0284C7" opacity="0.5"/>
+
+  <!-- Primary nodes -->
+  <!-- Top node (conductor/CEO) -->
+  <circle cx="256" cy="128" r="40" fill="url(#ao-grad)"/>
+  <!-- Inner highlight -->
+  <circle cx="256" cy="128" r="16" fill="white" opacity="0.9"/>
+
+  <!-- Left mid node -->
+  <circle cx="144" cy="336" r="32" fill="url(#ao-grad)"/>
+  <circle cx="144" cy="336" r="12" fill="white" opacity="0.9"/>
+
+  <!-- Right mid node -->
+  <circle cx="368" cy="336" r="32" fill="url(#ao-grad)"/>
+  <circle cx="368" cy="336" r="12" fill="white" opacity="0.9"/>
+
+  <!-- Crossbar mid-dots (on the A crossbar) -->
+  <circle cx="216" cy="264" r="14" fill="#0284C7" opacity="0.7"/>
+  <circle cx="256" cy="264" r="14" fill="#1E40AF"/>
+  <circle cx="296" cy="264" r="14" fill="#0284C7" opacity="0.7"/>
+</svg>

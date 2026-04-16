@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 80" fill="none">
+  <!--
+    AgentisOrchestra Full Logo: mark + wordmark + "by AgentisLab"
+  -->
+  <defs>
+    <linearGradient id="aof-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1E40AF"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Logo mark (compact version, fits 56x56 area offset within 64x80) -->
+  <g transform="translate(4, 12) scale(0.109375)">
+    <!-- Connection lines -->
+    <line x1="256" y1="128" x2="144" y2="336" stroke="url(#aof-grad)" stroke-width="28" stroke-linecap="round"/>
+    <line x1="256" y1="128" x2="368" y2="336" stroke="url(#aof-grad)" stroke-width="28" stroke-linecap="round"/>
+    <line x1="184" y1="264" x2="328" y2="264" stroke="url(#aof-grad)" stroke-width="24" stroke-linecap="round"/>
+    <!-- Secondary branches -->
+    <line x1="144" y1="336" x2="88" y2="408" stroke="url(#aof-grad)" stroke-width="16" stroke-linecap="round" opacity="0.6"/>
+    <line x1="144" y1="336" x2="200" y2="408" stroke="url(#aof-grad)" stroke-width="16" stroke-linecap="round" opacity="0.6"/>
+    <line x1="368" y1="336" x2="312" y2="408" stroke="url(#aof-grad)" stroke-width="16" stroke-linecap="round" opacity="0.6"/>
+    <line x1="368" y1="336" x2="424" y2="408" stroke="url(#aof-grad)" stroke-width="16" stroke-linecap="round" opacity="0.6"/>
+    <!-- Leaf nodes -->
+    <circle cx="88" cy="408" r="20" fill="#0284C7" opacity="0.5"/>
+    <circle cx="200" cy="408" r="20" fill="#0284C7" opacity="0.5"/>
+    <circle cx="312" cy="408" r="20" fill="#0284C7" opacity="0.5"/>
+    <circle cx="424" cy="408" r="20" fill="#0284C7" opacity="0.5"/>
+    <!-- Primary nodes -->
+    <circle cx="256" cy="128" r="40" fill="url(#aof-grad)"/>
+    <circle cx="256" cy="128" r="16" fill="white" opacity="0.9"/>
+    <circle cx="144" cy="336" r="32" fill="url(#aof-grad)"/>
+    <circle cx="144" cy="336" r="12" fill="white" opacity="0.9"/>
+    <circle cx="368" cy="336" r="32" fill="url(#aof-grad)"/>
+    <circle cx="368" cy="336" r="12" fill="white" opacity="0.9"/>
+    <!-- Crossbar dots -->
+    <circle cx="216" cy="264" r="14" fill="#0284C7" opacity="0.7"/>
+    <circle cx="256" cy="264" r="14" fill="#1E40AF"/>
+    <circle cx="296" cy="264" r="14" fill="#0284C7" opacity="0.7"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="72" y="38" font-family="Inter, system-ui, sans-serif" font-size="24" font-weight="600" fill="#1E40AF" letter-spacing="-0.02em">Agentis</text>
+  <text x="185" y="38" font-family="Inter, system-ui, sans-serif" font-size="24" font-weight="400" fill="#0f172a" letter-spacing="-0.02em">Orchestra</text>
+
+  <!-- "by AgentisLab" subtitle -->
+  <text x="72" y="56" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="400" fill="#94a3b8" letter-spacing="0.02em">by AgentisLab</text>
+</svg>

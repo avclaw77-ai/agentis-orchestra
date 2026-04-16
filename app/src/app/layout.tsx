@@ -16,6 +16,10 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "AgentisOrchestra",
   description: "Multi-agent orchestration platform -- build, run, and conduct AI agent teams",
+  icons: {
+    icon: "/favicon.svg",
+    apple: "/logo.svg",
+  },
 }
 
 export default function RootLayout({

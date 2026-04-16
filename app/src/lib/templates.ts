@@ -1,4 +1,5 @@
 import type { DepartmentTemplate } from "@/types"
+export type { DepartmentTemplate }
 
 // =============================================================================
 // Department templates -- pre-configured agent setups per department type

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!--
+    AgentisOrchestra Favicon -- simplified mark for 16x16 / 32x32
+    Reduced to essential A-shape with 3 nodes.
+  -->
+  <defs>
+    <linearGradient id="fav-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1E40AF"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded background for visibility at small sizes -->
+  <rect x="1" y="1" width="30" height="30" rx="7" fill="url(#fav-grad)"/>
+
+  <!-- A-shape formed by 3 white nodes connected by lines -->
+  <!-- Lines -->
+  <line x1="16" y1="7" x2="8" y2="23" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.9"/>
+  <line x1="16" y1="7" x2="24" y2="23" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.9"/>
+  <line x1="11" y1="17" x2="21" y2="17" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+
+  <!-- Nodes -->
+  <circle cx="16" cy="7" r="3" fill="white"/>
+  <circle cx="8" cy="23" r="2.5" fill="white" opacity="0.9"/>
+  <circle cx="24" cy="23" r="2.5" fill="white" opacity="0.9"/>
+</svg>
