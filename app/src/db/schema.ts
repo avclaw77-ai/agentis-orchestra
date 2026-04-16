@@ -359,49 +359,100 @@ export const decisions = pgTable(
 )
 
 // =============================================================================
-// WORKFLOWS -- Autonomous execution
+// ROUTINES -- Named multi-step agent workflows with scheduling
 // =============================================================================
 
-export const workflows = pgTable(
-  "workflows",
+export const routines = pgTable(
+  "routines",
   {
     id: text("id").primaryKey(),
     departmentId: text("department_id").references(() => departments.id, {
-      onDelete: "cascade",
+      onDelete: "set null",
     }), // NULL = company-wide
     name: text("name").notNull(),
     description: text("description"),
-    steps: jsonb("steps").notNull().default([]), // ordered list of agent steps
-    trigger: jsonb("trigger").default({}), // cron, webhook, manual
-    isActive: boolean("is_active").default(false),
-    lastRunAt: timestamp("last_run_at"),
+    assigneeAgentId: text("assignee_agent_id").references(() => agents.id, {
+      onDelete: "set null",
+    }), // primary agent (for single-agent routines)
+    status: text("status").default("draft"), // draft | active | paused | archived
+    concurrencyPolicy: text("concurrency_policy").default("skip"), // skip | queue | replace
+    catchUpPolicy: text("catch_up_policy").default("skip"), // skip | run_once | run_all
+    maxDurationMs: integer("max_duration_ms").default(600000), // 10 min
+    lastTriggeredAt: timestamp("last_triggered_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
-  (t) => [index("workflows_department_idx").on(t.departmentId)]
+  (t) => [
+    index("routines_department_idx").on(t.departmentId),
+    index("routines_status_idx").on(t.status),
+  ]
 )
 
-export const workflowRuns = pgTable(
-  "workflow_runs",
+export const routineTriggers = pgTable(
+  "routine_triggers",
   {
     id: text("id").primaryKey(),
-    workflowId: text("workflow_id")
+    routineId: text("routine_id")
       .notNull()
-      .references(() => workflows.id, { onDelete: "cascade" }),
-    departmentId: text("department_id").references(() => departments.id, {
-      onDelete: "cascade",
-    }), // NULL = company-wide
-    status: text("status").notNull().default("running"), // running | completed | failed | cancelled
-    input: jsonb("input").default({}),
-    output: jsonb("output").default({}),
-    tokensUsed: integer("tokens_used").default(0),
-    costCents: integer("cost_cents").default(0),
-    startedAt: timestamp("started_at").defaultNow().notNull(),
-    completedAt: timestamp("completed_at"),
+      .references(() => routines.id, { onDelete: "cascade" }),
+    type: text("type").notNull(), // 'cron' | 'webhook' | 'manual'
+    cronExpression: text("cron_expression"), // for cron type
+    cronHumanLabel: text("cron_human_label"), // "Every weekday at 9am" for display
+    webhookPath: text("webhook_path"), // unique path for webhook type, e.g. '/hooks/daily-report'
+    webhookSecret: text("webhook_secret"), // HMAC secret for webhook validation
+    isActive: boolean("is_active").default(true),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => [
-    index("workflow_runs_workflow_idx").on(t.workflowId),
-    index("workflow_runs_department_idx").on(t.departmentId),
+    index("routine_triggers_routine_idx").on(t.routineId),
+    uniqueIndex("routine_triggers_webhook_path_idx").on(t.webhookPath),
+  ]
+)
+
+export const routineSteps = pgTable(
+  "routine_steps",
+  {
+    id: text("id").primaryKey(),
+    routineId: text("routine_id")
+      .notNull()
+      .references(() => routines.id, { onDelete: "cascade" }),
+    stepOrder: integer("step_order").notNull(),
+    agentId: text("agent_id")
+      .notNull()
+      .references(() => agents.id, { onDelete: "cascade" }),
+    promptTemplate: text("prompt_template").notNull(), // supports {{prev_output}} interpolation
+    modelOverride: text("model_override"), // override the agent's default model for this step
+    timeoutMs: integer("timeout_ms").default(300000), // 5 min per step
+    dependsOnStepId: text("depends_on_step_id"), // if set, waits for this step to complete
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [
+    index("routine_steps_routine_order_idx").on(t.routineId, t.stepOrder),
+  ]
+)
+
+export const routineRuns = pgTable(
+  "routine_runs",
+  {
+    id: text("id").primaryKey(),
+    routineId: text("routine_id")
+      .notNull()
+      .references(() => routines.id, { onDelete: "cascade" }),
+    triggerType: text("trigger_type").notNull(), // 'cron' | 'webhook' | 'manual'
+    triggerPayload: jsonb("trigger_payload").default({}), // webhook body or manual params
+    status: text("status").default("queued"), // queued | running | completed | failed | cancelled | timed_out
+    currentStep: integer("current_step").default(0),
+    stepResults: jsonb("step_results").default([]), // array of { stepId, agentId, status, output, tokens, costCents, durationMs }
+    totalTokens: integer("total_tokens").default(0),
+    totalCostCents: integer("total_cost_cents").default(0),
+    error: text("error"),
+    startedAt: timestamp("started_at"),
+    completedAt: timestamp("completed_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [
+    index("routine_runs_routine_created_idx").on(t.routineId, t.createdAt),
+    index("routine_runs_status_idx").on(t.status),
   ]
 )
 

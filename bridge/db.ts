@@ -415,3 +415,244 @@ export async function finishWakeup(requestId: string): Promise<void> {
     console.error("[db] finishWakeup error:", err)
   }
 }
+
+// =============================================================================
+// Routines
+// =============================================================================
+
+export async function getRoutineById(
+  routineId: string
+): Promise<Record<string, unknown> | null> {
+  if (!isReady()) return null
+  try {
+    const rows = await sql`SELECT * FROM routines WHERE id = ${routineId}`
+    return rows.length > 0 ? (rows[0] as Record<string, unknown>) : null
+  } catch (err) {
+    console.error("[db] getRoutineById error:", err)
+    return null
+  }
+}
+
+export async function getRoutineSteps(
+  routineId: string
+): Promise<Record<string, unknown>[]> {
+  if (!isReady()) return []
+  try {
+    const rows = await sql`
+      SELECT * FROM routine_steps
+      WHERE routine_id = ${routineId}
+      ORDER BY step_order ASC
+    `
+    return rows as Record<string, unknown>[]
+  } catch (err) {
+    console.error("[db] getRoutineSteps error:", err)
+    return []
+  }
+}
+
+export async function updateRoutineLastTriggered(routineId: string): Promise<void> {
+  if (!isReady()) return
+  try {
+    await sql`
+      UPDATE routines SET last_triggered_at = NOW(), updated_at = NOW()
+      WHERE id = ${routineId}
+    `
+  } catch (err) {
+    console.error("[db] updateRoutineLastTriggered error:", err)
+  }
+}
+
+// =============================================================================
+// Routine Runs
+// =============================================================================
+
+export interface CreateRoutineRunParams {
+  id: string
+  routineId: string
+  triggerType: string
+  triggerPayload?: Record<string, unknown>
+}
+
+export async function createRoutineRun(params: CreateRoutineRunParams): Promise<void> {
+  if (!isReady()) return
+  try {
+    await sql`
+      INSERT INTO routine_runs (id, routine_id, trigger_type, trigger_payload, status)
+      VALUES (
+        ${params.id},
+        ${params.routineId},
+        ${params.triggerType},
+        ${JSON.stringify(params.triggerPayload ?? {})}::jsonb,
+        'queued'
+      )
+    `
+  } catch (err) {
+    console.error("[db] createRoutineRun error:", err)
+  }
+}
+
+export async function updateRoutineRunStatus(runId: string, status: string): Promise<void> {
+  if (!isReady()) return
+  try {
+    await sql`
+      UPDATE routine_runs
+      SET status = ${status}, started_at = COALESCE(started_at, NOW())
+      WHERE id = ${runId}
+    `
+  } catch (err) {
+    console.error("[db] updateRoutineRunStatus error:", err)
+  }
+}
+
+export async function updateRoutineRunStep(runId: string, step: number): Promise<void> {
+  if (!isReady()) return
+  try {
+    await sql`
+      UPDATE routine_runs SET current_step = ${step} WHERE id = ${runId}
+    `
+  } catch (err) {
+    console.error("[db] updateRoutineRunStep error:", err)
+  }
+}
+
+export async function updateRoutineRunResults(
+  runId: string,
+  data: { stepResults: unknown[]; totalTokens: number; totalCostCents: number }
+): Promise<void> {
+  if (!isReady()) return
+  try {
+    await sql`
+      UPDATE routine_runs
+      SET step_results = ${JSON.stringify(data.stepResults)}::jsonb,
+          total_tokens = ${data.totalTokens},
+          total_cost_cents = ${data.totalCostCents}
+      WHERE id = ${runId}
+    `
+  } catch (err) {
+    console.error("[db] updateRoutineRunResults error:", err)
+  }
+}
+
+export interface FinalizeRoutineRunParams {
+  status: string
+  error?: string | null
+  totalTokens?: number
+  totalCostCents?: number
+  stepResults?: unknown[]
+}
+
+export async function finalizeRoutineRun(
+  runId: string,
+  params: FinalizeRoutineRunParams
+): Promise<void> {
+  if (!isReady()) return
+  try {
+    await sql`
+      UPDATE routine_runs
+      SET status = ${params.status},
+          error = ${params.error ?? null},
+          total_tokens = COALESCE(${params.totalTokens ?? null}, total_tokens),
+          total_cost_cents = COALESCE(${params.totalCostCents ?? null}, total_cost_cents),
+          step_results = COALESCE(${params.stepResults ? JSON.stringify(params.stepResults) : null}::jsonb, step_results),
+          completed_at = NOW()
+      WHERE id = ${runId}
+    `
+  } catch (err) {
+    console.error("[db] finalizeRoutineRun error:", err)
+  }
+}
+
+export async function getRoutineRunById(
+  runId: string
+): Promise<Record<string, unknown> | null> {
+  if (!isReady()) return null
+  try {
+    const rows = await sql`SELECT * FROM routine_runs WHERE id = ${runId}`
+    return rows.length > 0 ? (rows[0] as Record<string, unknown>) : null
+  } catch (err) {
+    console.error("[db] getRoutineRunById error:", err)
+    return null
+  }
+}
+
+export async function getActiveRoutineRuns(
+  routineId: string
+): Promise<Record<string, unknown>[]> {
+  if (!isReady()) return []
+  try {
+    const rows = await sql`
+      SELECT * FROM routine_runs
+      WHERE routine_id = ${routineId}
+        AND status IN ('queued', 'running')
+    `
+    return rows as Record<string, unknown>[]
+  } catch (err) {
+    console.error("[db] getActiveRoutineRuns error:", err)
+    return []
+  }
+}
+
+export async function getRoutineRunsByRoutine(
+  routineId: string,
+  limit = 50,
+  offset = 0
+): Promise<Record<string, unknown>[]> {
+  if (!isReady()) return []
+  try {
+    const rows = await sql`
+      SELECT * FROM routine_runs
+      WHERE routine_id = ${routineId}
+      ORDER BY created_at DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `
+    return rows as Record<string, unknown>[]
+  } catch (err) {
+    console.error("[db] getRoutineRunsByRoutine error:", err)
+    return []
+  }
+}
+
+// =============================================================================
+// Routine Triggers (for scheduler + webhook handler)
+// =============================================================================
+
+export async function getActiveRoutineCronTriggers(): Promise<Record<string, unknown>[]> {
+  if (!isReady()) return []
+  try {
+    const rows = await sql`
+      SELECT
+        rt.id as trigger_id,
+        rt.routine_id,
+        rt.cron_expression,
+        r.name as routine_name
+      FROM routine_triggers rt
+      JOIN routines r ON r.id = rt.routine_id
+      WHERE rt.type = 'cron'
+        AND rt.is_active = true
+        AND r.status = 'active'
+        AND rt.cron_expression IS NOT NULL
+    `
+    return rows as Record<string, unknown>[]
+  } catch (err) {
+    console.error("[db] getActiveRoutineCronTriggers error:", err)
+    return []
+  }
+}
+
+export async function getRoutineTriggerByWebhookPath(
+  webhookPath: string
+): Promise<Record<string, unknown> | null> {
+  if (!isReady()) return null
+  try {
+    const rows = await sql`
+      SELECT * FROM routine_triggers
+      WHERE webhook_path = ${webhookPath}
+        AND is_active = true
+      LIMIT 1
+    `
+    return rows.length > 0 ? (rows[0] as Record<string, unknown>) : null
+  } catch (err) {
+    console.error("[db] getRoutineTriggerByWebhookPath error:", err)
+    return null
+  }
+}

@@ -214,39 +214,66 @@ export interface Decision {
 }
 
 // =============================================================================
-// Workflows
+// Routines -- Named multi-step agent workflows
 // =============================================================================
 
-export interface Workflow {
+export interface Routine {
   id: string
   departmentId: string | null
   name: string
   description: string | null
-  steps: WorkflowStep[]
-  trigger: WorkflowTrigger
+  assigneeAgentId: string | null
+  status: "draft" | "active" | "paused" | "archived"
+  concurrencyPolicy: string
+  catchUpPolicy: string
+  maxDurationMs: number
+  lastTriggeredAt: string | null
+  createdAt: string
+}
+
+export interface RoutineTrigger {
+  id: string
+  routineId: string
+  type: "cron" | "webhook" | "manual"
+  cronExpression: string | null
+  cronHumanLabel: string | null
+  webhookPath: string | null
+  webhookSecret: string | null
   isActive: boolean
 }
 
-export interface WorkflowStep {
-  agentId: string
-  prompt: string
-  dependsOn?: string[] // step IDs
-}
-
-export interface WorkflowTrigger {
-  type: "manual" | "cron" | "webhook"
-  cron?: string // "0 8 * * *"
-  webhookPath?: string // "/hooks/my-trigger"
-}
-
-export interface WorkflowRun {
+export interface RoutineStep {
   id: string
-  workflowId: string
-  status: "running" | "completed" | "failed" | "cancelled"
-  tokensUsed: number
-  costCents: number
-  startedAt: string
+  routineId: string
+  stepOrder: number
+  agentId: string
+  promptTemplate: string
+  modelOverride: string | null
+  timeoutMs: number
+  dependsOnStepId: string | null
+}
+
+export interface RoutineRun {
+  id: string
+  routineId: string
+  triggerType: string
+  status: string
+  currentStep: number
+  stepResults: Array<{
+    stepId: string
+    agentId: string
+    status: string
+    output: string
+    tokens: number
+    costCents: number
+    durationMs: number
+  }>
+  totalTokens: number
+  totalCostCents: number
+  error: string | null
+  startedAt: string | null
   completedAt: string | null
+  createdAt: string
 }
 
 // =============================================================================

@@ -6,6 +6,9 @@ import { MODEL_REGISTRY, type Provider } from "./models.js"
 import * as db from "./db.js"
 import { initCostTracker } from "./cost-tracker.js"
 import { heartbeatEngine } from "./heartbeat.js"
+import { routineEngine } from "./routine-engine.js"
+import { scheduler } from "./scheduler.js"
+import { createWebhookRouter } from "./webhook-handler.js"
 
 const PORT = parseInt(process.env.PORT || "3847", 10)
 const BRIDGE_TOKEN = process.env.BRIDGE_TOKEN || ""
@@ -19,6 +22,7 @@ db.initDb()
 if (process.env.DATABASE_URL) initCostTracker(process.env.DATABASE_URL)
 db.resetAllAgentsIdle()
 heartbeatEngine.start(10_000) // 10-second tick interval
+scheduler.start() // Routine cron scheduler
 
 // =============================================================================
 // Express setup (JSON routes)
@@ -52,6 +56,7 @@ app.get("/health", (_req, res) => {
     uptime: process.uptime(),
     sessions: sessionManager.activeSessions(),
     heartbeat: heartbeatEngine.isRunning(),
+    scheduler: scheduler.isRunning(),
   })
 })
 
@@ -156,6 +161,58 @@ app.get("/runs/:id", async (req, res) => {
     return
   }
   res.json({ run })
+})
+
+// =============================================================================
+// Webhook handler (catch-all for /hooks/*)
+// =============================================================================
+
+app.use(createWebhookRouter())
+
+// =============================================================================
+// Routine API routes
+// =============================================================================
+
+// Manual trigger for a routine
+app.post("/routines/:id/trigger", async (req, res) => {
+  const { payload } = req.body || {}
+  try {
+    const runId = await routineEngine.executeRun(req.params.id, "manual", payload || {})
+    if (!runId) {
+      res.status(409).json({ error: "Skipped due to concurrency policy" })
+      return
+    }
+    // Reload scheduler in case status changed
+    scheduler.reload()
+    res.json({ runId, status: "queued" })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown error"
+    res.status(500).json({ error: msg })
+  }
+})
+
+// List runs for a routine
+app.get("/routines/:id/runs", async (req, res) => {
+  const limit = parseInt(req.query.limit as string || "50", 10)
+  const offset = parseInt(req.query.offset as string || "0", 10)
+  const runs = await db.getRoutineRunsByRoutine(req.params.id, limit, offset)
+  res.json({ runs })
+})
+
+// Get a single routine run with step results
+app.get("/routine-runs/:id", async (req, res) => {
+  const run = await db.getRoutineRunById(req.params.id)
+  if (!run) {
+    res.status(404).json({ error: "Run not found" })
+    return
+  }
+  res.json({ run })
+})
+
+// Notify scheduler to reload (called by app API after routine create/update)
+app.post("/scheduler/reload", async (_req, res) => {
+  await scheduler.reload()
+  res.json({ reloaded: true, schedules: scheduler.isRunning() })
 })
 
 // =============================================================================
@@ -270,4 +327,5 @@ server.listen(PORT, "0.0.0.0", () => {
   console.log(`[bridge] AgentisOrchestra bridge listening on :${PORT}`)
   console.log(`[bridge] Adapter mode: ${process.env.ADAPTER_MODE || "sdk"}`)
   console.log(`[bridge] Heartbeat engine: ${heartbeatEngine.isRunning() ? "running" : "stopped"}`)
+  console.log(`[bridge] Routine scheduler: ${scheduler.isRunning() ? "running" : "stopped"}`)
 })

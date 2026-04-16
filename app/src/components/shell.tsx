@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   MessageSquare,
   KanbanSquare,
+  Repeat,
   Cpu,
   DollarSign,
   Settings,
@@ -14,7 +15,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-export type View = "dashboard" | "chat" | "tasks" | "models" | "costs" | "settings"
+export type View = "dashboard" | "chat" | "tasks" | "routines" | "models" | "costs" | "settings"
 
 interface Department {
   id: string
@@ -36,6 +37,7 @@ const NAV_ITEMS: { key: View; label: string; icon: React.ReactNode }[] = [
   { key: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} /> },
   { key: "chat", label: "Chat", icon: <MessageSquare size={18} /> },
   { key: "tasks", label: "Tasks", icon: <KanbanSquare size={18} /> },
+  { key: "routines", label: "Routines", icon: <Repeat size={18} /> },
   { key: "models", label: "Models", icon: <Cpu size={18} /> },
   { key: "costs", label: "Costs", icon: <DollarSign size={18} /> },
 ]

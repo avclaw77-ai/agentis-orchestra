@@ -9,7 +9,18 @@ import { TaskDetail } from "@/components/task-detail"
 import { CreateTaskDialog } from "@/components/create-task-dialog"
 import { ModelConfig } from "@/components/model-config"
 import { CostDashboard } from "@/components/cost-dashboard"
-import type { Agent, Task, TaskComment, TaskStatus, Department } from "@/types"
+import { RoutineList } from "@/components/routine-list"
+import { RoutineBuilder } from "@/components/routine-builder"
+import type {
+  Agent,
+  Task,
+  TaskComment,
+  TaskStatus,
+  Department,
+  Routine,
+  RoutineTrigger,
+  RoutineStep,
+} from "@/types"
 
 interface CompanyInfo {
   name: string
@@ -30,6 +41,15 @@ export default function DashboardPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [taskComments, setTaskComments] = useState<TaskComment[]>([])
   const [showCreateTask, setShowCreateTask] = useState(false)
+
+  // Routine state
+  const [routinesList, setRoutinesList] = useState<(Routine & { triggers?: RoutineTrigger[]; stepCount?: number; runCount?: number })[]>([])
+  const [showRoutineBuilder, setShowRoutineBuilder] = useState(false)
+  const [editingRoutine, setEditingRoutine] = useState<{
+    routine: Routine
+    triggers: RoutineTrigger[]
+    steps: RoutineStep[]
+  } | null>(null)
 
   useEffect(() => {
     fetchData()
@@ -168,6 +188,90 @@ export default function DashboardPage() {
     await fetchTasks()
   }
 
+  // -------------------------------------------------------------------------
+  // Routines
+  // -------------------------------------------------------------------------
+
+  const fetchRoutines = useCallback(async () => {
+    try {
+      const params = new URLSearchParams()
+      if (selectedDepartment) params.set("departmentId", selectedDepartment)
+      const res = await fetch(`/api/routines?${params}`)
+      if (res.ok) {
+        setRoutinesList(await res.json())
+      }
+    } catch {
+      // Routines will load once DB is ready
+    }
+  }, [selectedDepartment])
+
+  useEffect(() => {
+    if (view === "routines") {
+      fetchRoutines()
+    }
+  }, [view, selectedDepartment, fetchRoutines])
+
+  async function handleCreateRoutine(data: {
+    name: string
+    description: string
+    departmentId: string | null
+    assigneeAgentId: string | null
+    status: string
+    concurrencyPolicy: string
+    catchUpPolicy: string
+    maxDurationMs: number
+    triggers: unknown[]
+    steps: unknown[]
+  }) {
+    await fetch("/api/routines", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+    setShowRoutineBuilder(false)
+    setEditingRoutine(null)
+    await fetchRoutines()
+  }
+
+  async function handleRoutineStatusChange(id: string, status: string) {
+    await fetch("/api/routines", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, status }),
+    })
+    await fetchRoutines()
+  }
+
+  async function handleRoutineTrigger(id: string) {
+    await fetch(`/api/routines/${id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    })
+    await fetchRoutines()
+  }
+
+  async function handleRoutineDelete(id: string) {
+    await fetch(`/api/routines?id=${id}`, { method: "DELETE" })
+    await fetchRoutines()
+  }
+
+  async function handleRoutineSelect(id: string) {
+    try {
+      const res = await fetch(`/api/routines/${id}`)
+      if (res.ok) {
+        const data = await res.json()
+        setEditingRoutine({
+          routine: data,
+          triggers: data.triggers || [],
+          steps: data.steps || [],
+        })
+        setShowRoutineBuilder(true)
+      }
+    } catch {
+      // will work once routine exists
+    }
+  }
+
   const visibleAgents = selectedDepartment
     ? agents.filter((a) => a.departmentId === selectedDepartment)
     : agents
@@ -257,6 +361,37 @@ export default function DashboardPage() {
               currentDepartment={selectedDepartment}
               onClose={() => setShowCreateTask(false)}
               onCreate={handleCreateTask}
+            />
+          )}
+        </div>
+      )}
+
+      {view === "routines" && (
+        <div className="p-6 max-w-4xl">
+          <RoutineList
+            routines={routinesList}
+            onSelect={handleRoutineSelect}
+            onCreate={() => {
+              setEditingRoutine(null)
+              setShowRoutineBuilder(true)
+            }}
+            onTrigger={handleRoutineTrigger}
+            onStatusChange={handleRoutineStatusChange}
+            onDelete={handleRoutineDelete}
+          />
+
+          {showRoutineBuilder && (
+            <RoutineBuilder
+              agents={agents}
+              departments={departments}
+              routine={editingRoutine?.routine}
+              triggers={editingRoutine?.triggers}
+              steps={editingRoutine?.steps}
+              onSave={handleCreateRoutine}
+              onCancel={() => {
+                setShowRoutineBuilder(false)
+                setEditingRoutine(null)
+              }}
             />
           )}
         </div>
