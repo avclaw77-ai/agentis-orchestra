@@ -529,7 +529,7 @@ export default function DashboardPage() {
   }, [selectedDepartment])
 
   useEffect(() => {
-    if (view === "settings" && settingsTab === "approvals") {
+    if (view === "approvals" || (view === "settings" && settingsTab === "approvals")) {
       fetchApprovals()
     }
   }, [view, settingsTab, selectedDepartment, fetchApprovals])
@@ -944,6 +944,44 @@ export default function DashboardPage() {
       {view === "models" && (
         <div className="p-6 max-w-5xl">
           <ModelConfig />
+        </div>
+      )}
+
+      {view === "approvals" && (
+        <div className="p-6 max-w-4xl">
+          <ApprovalFeed
+            approvals={approvalsList}
+            comments={approvalComments}
+            agents={filteredAgents}
+            onApprove={async (id, note) => {
+              await fetch("/api/approvals", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id, status: "approved", decisionNote: note }),
+              })
+              fetchApprovals()
+            }}
+            onReject={async (id, note) => {
+              await fetch("/api/approvals", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id, status: "rejected", decisionNote: note }),
+              })
+              fetchApprovals()
+            }}
+            onComment={async (approvalId, body) => {
+              await fetch(`/api/approvals/${approvalId}/comments`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ body, authorUserId: "admin" }),
+              })
+              const res = await fetch(`/api/approvals/${approvalId}/comments`)
+              if (res.ok) {
+                const comments = await res.json()
+                setApprovalComments((prev) => ({ ...prev, [approvalId]: comments }))
+              }
+            }}
+          />
         </div>
       )}
 

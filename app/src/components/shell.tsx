@@ -17,10 +17,11 @@ import {
   Menu,
   X,
   User,
+  ShieldCheck,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-export type View = "dashboard" | "chat" | "tasks" | "goals" | "routines" | "models" | "costs" | "settings"
+export type View = "dashboard" | "chat" | "tasks" | "goals" | "routines" | "approvals" | "models" | "costs" | "settings"
 
 interface Department {
   id: string
@@ -60,6 +61,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { key: "goals", label: "Goals", icon: <Target size={18} /> },
       { key: "routines", label: "Routines", icon: <Repeat size={18} /> },
+      { key: "approvals", label: "Approvals", icon: <ShieldCheck size={18} /> },
       { key: "costs", label: "Costs", icon: <DollarSign size={18} /> },
     ],
   },

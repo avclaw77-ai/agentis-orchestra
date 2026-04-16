@@ -305,7 +305,7 @@ export const tasks = pgTable(
     }), // NULL = company-wide CEO task
     title: text("title").notNull(),
     status: text("status").notNull().default("backlog"), // backlog | in-progress | review | done
-    assignedTo: text("assigned_to"),
+    assignedTo: text("assigned_to").references(() => agents.id, { onDelete: "set null" }),
     createdBy: text("created_by"),
     project: text("project"),
     priority: text("priority").default("medium"), // low | medium | high | critical
