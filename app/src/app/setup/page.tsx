@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import { DEPARTMENT_TEMPLATES, getTemplate } from "@/lib/templates"
 import { WelcomeStep } from "@/components/setup/welcome-step"
 import { AdminStep } from "@/components/setup/admin-step"
-import { CompanyStep } from "@/components/setup/company-step"
+import { CompanyStep, type CompanyProposal } from "@/components/setup/company-step"
 import { ProvidersStep } from "@/components/setup/providers-step"
 import { DepartmentStep } from "@/components/setup/department-step"
 import { AgentsStep } from "@/components/setup/agents-step"
@@ -23,6 +23,9 @@ interface AdminData {
 interface CompanyData {
   name: string
   mission: string
+  website: string
+  industry: string
+  description: string
 }
 
 interface ProviderStatus {
@@ -82,7 +85,8 @@ export default function SetupPage() {
   // Step data
   const [locale, setLocale] = useState("en")
   const [admin, setAdmin] = useState<AdminData>({ email: "", password: "", name: "" })
-  const [companyData, setCompanyData] = useState<CompanyData>({ name: "", mission: "" })
+  const [companyData, setCompanyData] = useState<CompanyData>({ name: "", mission: "", website: "", industry: "", description: "" })
+  const [proposal, setProposal] = useState<CompanyProposal | null>(null)
   const [providers, setProviders] = useState<ProviderStatus[]>(INITIAL_PROVIDERS)
   const [departments, setDepartments] = useState<DepartmentSetup[]>([])
   const [currentDept, setCurrentDept] = useState<DepartmentSetup>({
@@ -106,6 +110,20 @@ export default function SetupPage() {
   }
 
   function handleNext() {
+    if (step === 2 && proposal) {
+      // If we have a proposal from AI analysis, auto-populate departments
+      // and skip to the ready step (user can still go back and edit)
+      const proposedDepts: DepartmentSetup[] = proposal.departments.map((d) => ({
+        id: d.id,
+        name: d.name,
+        description: d.description,
+        color: d.color,
+        template: null,
+        agents: d.agents.map((a) => ({ id: a.id, name: a.name, role: a.role, model: a.model })),
+      }))
+      setDepartments(proposedDepts)
+      // Skip to step 3 (providers) -- departments are pre-filled, user reviews at step 6
+    }
     if (step === 4) {
       // When leaving department step, load template agents if applicable
       if (currentDept.template) {
@@ -261,7 +279,14 @@ export default function SetupPage() {
       <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">
         {step === 0 && <WelcomeStep locale={locale} onLocaleChange={setLocale} />}
         {step === 1 && <AdminStep data={admin} onChange={setAdmin} />}
-        {step === 2 && <CompanyStep data={companyData} onChange={setCompanyData} />}
+        {step === 2 && (
+          <CompanyStep
+            data={companyData}
+            onChange={setCompanyData}
+            proposal={proposal}
+            onProposalReceived={setProposal}
+          />
+        )}
         {step === 3 && (
           <ProvidersStep
             providers={providers}
