@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgentisOrchestra -- Your AI Team, Orchestrated</title>
+<meta name="description" content="Open-source multi-agent orchestration platform. Departments, agents, routines, budgets. One install, one company. Built in Quebec.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --primary: #1E40AF;
+  --primary-hover: #1E3A8A;
+  --primary-light: #DBEAFE;
+  --primary-lighter: #EFF6FF;
+  --bg: #FFFFFF;
+  --bg-alt: #F8FAFC;
+  --text: #0F172A;
+  --text-secondary: #64748B;
+  --text-tertiary: #94A3B8;
+  --border: #E2E8F0;
+  --success: #16A34A;
+  --accent: #7C3AED;
+  --font: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+}
+
+/* ── Layout ── */
+.container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+section { padding: 96px 0; }
+
+/* ── Typography ── */
+h1 { font-size: clamp(2rem, 5vw, 3.25rem); font-weight: 800; line-height: 1.15; letter-spacing: -0.025em; }
+h2 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; line-height: 1.25; letter-spacing: -0.02em; }
+h3 { font-size: 1.125rem; font-weight: 600; line-height: 1.4; }
+p { color: var(--text-secondary); }
+
+/* ── Animations ── */
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.fade-in-delay-1 { transition-delay: 0.1s; }
+.fade-in-delay-2 { transition-delay: 0.2s; }
+.fade-in-delay-3 { transition-delay: 0.3s; }
+.fade-in-delay-4 { transition-delay: 0.4s; }
+
+/* ── Nav ── */
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  height: 64px;
+  display: flex;
+  align-items: center;
+}
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text);
+}
+.nav-logo-mark {
+  width: 32px;
+  height: 32px;
+  background: var(--primary);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-logo-mark svg { width: 18px; height: 18px; }
+.nav-logo-text { font-weight: 700; font-size: 15px; }
+.nav-logo-text span { color: var(--text-tertiary); font-weight: 400; }
+.nav-links { display: flex; align-items: center; gap: 32px; }
+.nav-links a {
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+.nav-links a:hover { color: var(--text); }
+.nav-cta {
+  background: var(--primary);
+  color: #fff !important;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+.nav-cta:hover { background: var(--primary-hover) !important; color: #fff !important; }
+.nav-lang {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  background: transparent;
+  font-family: var(--font);
+  font-weight: 500;
+  transition: border-color 0.15s;
+}
+.nav-lang:hover { border-color: var(--text-tertiary); }
+
+@media (max-width: 768px) {
+  .nav-links { gap: 16px; }
+  .nav-links a:not(.nav-cta) { display: none; }
+}
+
+/* ── Hero ── */
+.hero {
+  padding-top: 160px;
+  padding-bottom: 96px;
+  text-align: center;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: var(--primary-lighter);
+  border: 1px solid var(--primary-light);
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 24px;
+}
+.hero-badge svg { width: 14px; height: 14px; }
+.hero h1 { max-width: 720px; margin: 0 auto 20px; }
+.hero p {
+  font-size: 1.125rem;
+  max-width: 560px;
+  margin: 0 auto 40px;
+  line-height: 1.7;
+}
+.hero-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font);
+}
+.btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s;
+  cursor: pointer;
+  font-family: var(--font);
+}
+.btn-secondary:hover { border-color: var(--text-tertiary); }
+.btn-secondary svg { width: 18px; height: 18px; }
+.hero-install {
+  margin-top: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.hero-install code {
+  font-family: var(--mono);
+  font-size: 14px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  padding: 10px 20px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  user-select: all;
+}
+.hero-install button {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+}
+.hero-install button:hover { color: var(--text); border-color: var(--text-tertiary); }
+.hero-install button.copied { color: var(--success); border-color: var(--success); }
+
+/* ── Screenshot preview ── */
+.hero-preview {
+  margin-top: 64px;
+  position: relative;
+}
+.preview-frame {
+  max-width: 960px;
+  margin: 0 auto;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
+}
+.preview-titlebar {
+  height: 40px;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 8px;
+}
+.preview-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--border); }
+.preview-content {
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 20px;
+  min-height: 400px;
+}
+.preview-sidebar {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 16px;
+}
+.preview-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+.preview-sidebar-item.active {
+  background: var(--primary);
+  color: #fff;
+}
+.preview-sidebar-item .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.5;
+}
+.preview-main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr;
+  gap: 16px;
+}
+.preview-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.preview-card.full { grid-column: 1 / -1; }
+.preview-card-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+.preview-agent {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+.preview-agent-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.preview-agent-name { font-size: 13px; font-weight: 500; }
+.preview-agent-status { font-size: 12px; color: var(--text-tertiary); margin-left: auto; }
+.preview-stat { text-align: center; }
+.preview-stat-value { font-size: 24px; font-weight: 700; color: var(--text); }
+.preview-stat-label { font-size: 12px; color: var(--text-tertiary); }
+.preview-bar {
+  height: 6px;
+  background: var(--primary-light);
+  border-radius: 3px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.preview-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--primary);
+}
+
+@media (max-width: 768px) {
+  .preview-content { grid-template-columns: 1fr; }
+  .preview-sidebar { display: none; }
+  .preview-main { grid-template-columns: 1fr; }
+}
+
+/* ── How It Works ── */
+.how-it-works { background: var(--bg-alt); }
+.section-label {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+}
+.section-title { margin-bottom: 16px; }
+.section-desc {
+  font-size: 1.0625rem;
+  max-width: 560px;
+  margin-bottom: 56px;
+}
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+  position: relative;
+}
+.steps-grid::before {
+  content: '';
+  position: absolute;
+  top: 28px;
+  left: calc(12.5% + 16px);
+  right: calc(12.5% + 16px);
+  height: 2px;
+  background: var(--border);
+}
+.step {
+  text-align: center;
+  position: relative;
+}
+.step-number {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: #fff;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary);
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s;
+}
+.step:hover .step-number {
+  border-color: var(--primary);
+  background: var(--primary-lighter);
+}
+.step h3 { margin-bottom: 8px; font-size: 1rem; }
+.step p { font-size: 14px; line-height: 1.6; }
+
+@media (max-width: 768px) {
+  .steps-grid { grid-template-columns: 1fr 1fr; }
+  .steps-grid::before { display: none; }
+}
+@media (max-width: 480px) {
+  .steps-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Features ── */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.feature-card {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 28px;
+  transition: all 0.2s;
+}
+.feature-card:hover {
+  border-color: var(--primary-light);
+  box-shadow: 0 4px 16px rgba(30,64,175,0.06);
+}
+.feature-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--primary-lighter);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  color: var(--primary);
+}
+.feature-card h3 { margin-bottom: 8px; }
+.feature-card p { font-size: 14px; line-height: 1.65; }
+
+@media (max-width: 768px) {
+  .features-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+  .features-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Audience ── */
+.audience { background: var(--bg-alt); }
+.audience-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.audience-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 32px;
+  text-align: center;
+  transition: all 0.2s;
+}
+.audience-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+.audience-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  font-size: 28px;
+}
+.audience-card h3 { margin-bottom: 8px; }
+.audience-card p { font-size: 14px; line-height: 1.65; }
+
+@media (max-width: 480px) {
+  .audience-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Origin ── */
+.origin {
+  text-align: center;
+}
+.origin-inner {
+  max-width: 640px;
+  margin: 0 auto;
+}
+.origin-flag {
+  font-size: 48px;
+  margin-bottom: 20px;
+  display: block;
+}
+.origin h2 { margin-bottom: 16px; }
+.origin p {
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  margin-bottom: 16px;
+}
+.origin-tagline {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary);
+  padding: 8px 20px;
+  background: var(--primary-lighter);
+  border-radius: 100px;
+}
+
+/* ── CTA Section ── */
+.cta-section {
+  background: var(--text);
+  color: #fff;
+  text-align: center;
+  padding: 80px 0;
+}
+.cta-section h2 { color: #fff; margin-bottom: 16px; }
+.cta-section p { color: rgba(255,255,255,0.65); font-size: 1.0625rem; max-width: 480px; margin: 0 auto 32px; }
+.btn-primary-light {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  background: #fff;
+  color: var(--text);
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font);
+}
+.btn-primary-light:hover { background: #F1F5F9; transform: translateY(-1px); }
+
+/* ── Footer ── */
+footer {
+  padding: 48px 0;
+  border-top: 1px solid var(--border);
+}
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.footer-brand-mark {
+  width: 24px;
+  height: 24px;
+  background: var(--primary);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.footer-brand-mark svg { width: 14px; height: 14px; }
+.footer-brand-text { font-size: 14px; font-weight: 600; color: var(--text); }
+.footer-brand-text span { color: var(--text-tertiary); font-weight: 400; }
+.footer-links {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.footer-links a {
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.footer-links a:hover { color: var(--text); }
+.footer-copy {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+@media (max-width: 640px) {
+  .footer-inner { flex-direction: column; gap: 20px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════ NAV ════════════════ -->
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+      </div>
+      <span class="nav-logo-text">AgentisOrchestra <span>by AgentisLab</span></span>
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#how-it-works">How It Works</a>
+      <a href="https://github.com/agentislab/orchestra" target="_blank">GitHub</a>
+      <button class="nav-lang" onclick="toggleLang()" id="langToggle">FR</button>
+      <a href="#get-started" class="nav-cta">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ════════════════ HERO ════════════════ -->
+<section class="hero" id="hero">
+  <div class="container">
+    <div class="fade-in">
+      <div class="hero-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        Open source &middot; Self-hosted &middot; Docker-first
+      </div>
+    </div>
+    <h1 class="fade-in fade-in-delay-1" data-i18n="hero-title">Your AI team,<br>orchestrated.</h1>
+    <p class="fade-in fade-in-delay-2" data-i18n="hero-desc">Departments, agents, routines, budgets. One install gives your company an AI operating system that works while you sleep.</p>
+    <div class="hero-actions fade-in fade-in-delay-3">
+      <a href="#get-started" class="btn-primary" data-i18n="hero-cta">Get Started</a>
+      <a href="https://github.com/agentislab/orchestra" target="_blank" class="btn-secondary">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+    <div class="hero-install fade-in fade-in-delay-4" id="get-started">
+      <code id="installCmd">docker compose up</code>
+      <button onclick="copyInstall()" id="copyBtn" title="Copy to clipboard">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      </button>
+    </div>
+
+    <!-- App preview -->
+    <div class="hero-preview fade-in">
+      <div class="preview-frame">
+        <div class="preview-titlebar">
+          <div class="preview-dot"></div>
+          <div class="preview-dot"></div>
+          <div class="preview-dot"></div>
+        </div>
+        <div class="preview-content">
+          <div class="preview-sidebar">
+            <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;padding:4px 10px;">Acme Corp</div>
+            <div style="font-size:11px;color:var(--text-tertiary);margin-bottom:12px;padding:0 10px;">All Departments</div>
+            <div class="preview-sidebar-item active"><div class="dot"></div> Dashboard</div>
+            <div class="preview-sidebar-item"><div class="dot"></div> Agents</div>
+            <div class="preview-sidebar-item"><div class="dot"></div> Tasks</div>
+            <div class="preview-sidebar-item"><div class="dot"></div> Goals</div>
+            <div class="preview-sidebar-item"><div class="dot"></div> Routines</div>
+            <div style="border-top:1px solid var(--border);margin:8px 0;"></div>
+            <div class="preview-sidebar-item"><div class="dot"></div> Costs</div>
+            <div class="preview-sidebar-item"><div class="dot"></div> Settings</div>
+          </div>
+          <div class="preview-main">
+            <div class="preview-card">
+              <div class="preview-card-title">Agent Status</div>
+              <div class="preview-agent">
+                <div class="preview-agent-dot" style="background:#16A34A;"></div>
+                <span class="preview-agent-name">CIO</span>
+                <span class="preview-agent-status">Active</span>
+              </div>
+              <div class="preview-agent">
+                <div class="preview-agent-dot" style="background:#D97706;"></div>
+                <span class="preview-agent-name">Dev</span>
+                <span class="preview-agent-status">Thinking</span>
+              </div>
+              <div class="preview-agent">
+                <div class="preview-agent-dot" style="background:#94A3B8;"></div>
+                <span class="preview-agent-name">QA</span>
+                <span class="preview-agent-status">Idle</span>
+              </div>
+              <div class="preview-agent">
+                <div class="preview-agent-dot" style="background:#16A34A;"></div>
+                <span class="preview-agent-name">UIUX</span>
+                <span class="preview-agent-status">Active</span>
+              </div>
+            </div>
+            <div class="preview-card">
+              <div class="preview-card-title">Cost This Month</div>
+              <div style="display:flex;gap:24px;margin-bottom:12px;">
+                <div class="preview-stat">
+                  <div class="preview-stat-value">$45</div>
+                  <div class="preview-stat-label">Spent</div>
+                </div>
+                <div class="preview-stat">
+                  <div class="preview-stat-value">72%</div>
+                  <div class="preview-stat-label">Budget</div>
+                </div>
+              </div>
+              <div class="preview-bar"><div class="preview-bar-fill" style="width:72%;"></div></div>
+            </div>
+            <div class="preview-card full">
+              <div class="preview-card-title">Recent Activity</div>
+              <div style="font-size:13px;color:var(--text-secondary);line-height:2;">
+                <div><span style="color:var(--text-tertiary);">10:32</span> &nbsp;Dev completed "Fix auth flow"</div>
+                <div><span style="color:var(--text-tertiary);">10:15</span> &nbsp;QA approved PR #42</div>
+                <div><span style="color:var(--text-tertiary);">09:45</span> &nbsp;Morning brief routine completed</div>
+                <div><span style="color:var(--text-tertiary);">09:00</span> &nbsp;RnD started market research</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ HOW IT WORKS ════════════════ -->
+<section class="how-it-works" id="how-it-works">
+  <div class="container">
+    <div class="section-label fade-in" data-i18n="hiw-label">How It Works</div>
+    <h2 class="section-title fade-in" data-i18n="hiw-title">From zero to orchestrated in minutes</h2>
+    <p class="section-desc fade-in" data-i18n="hiw-desc">One Docker command. A guided setup wizard. Your AI team is operational.</p>
+
+    <div class="steps-grid">
+      <div class="step fade-in">
+        <div class="step-number">1</div>
+        <h3 data-i18n="step1-title">Install</h3>
+        <p data-i18n="step1-desc">One command. Docker Compose pulls everything: app, bridge, database. Done in under a minute.</p>
+      </div>
+      <div class="step fade-in fade-in-delay-1">
+        <div class="step-number">2</div>
+        <h3 data-i18n="step2-title">Configure</h3>
+        <p data-i18n="step2-desc">The setup wizard walks you through: company profile, AI providers, departments, and agent roles.</p>
+      </div>
+      <div class="step fade-in fade-in-delay-2">
+        <div class="step-number">3</div>
+        <h3 data-i18n="step3-title">Deploy</h3>
+        <p data-i18n="step3-desc">Agents are live. Heartbeats running. Routines scheduled. Your AI team starts working autonomously.</p>
+      </div>
+      <div class="step fade-in fade-in-delay-3">
+        <div class="step-number">4</div>
+        <h3 data-i18n="step4-title">Orchestrate</h3>
+        <p data-i18n="step4-desc">Monitor, direct, and scale from the dashboard. Set goals, review work, manage budgets. Stay in control.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ FEATURES ════════════════ -->
+<section id="features">
+  <div class="container">
+    <div class="section-label fade-in" data-i18n="feat-label">Capabilities</div>
+    <h2 class="section-title fade-in" data-i18n="feat-title">Everything you need to run an AI-powered organization</h2>
+    <p class="section-desc fade-in" data-i18n="feat-desc">Not a chatbot. Not a dev tool. An operating system for AI teams.</p>
+
+    <div class="features-grid">
+      <div class="feature-card fade-in">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        </div>
+        <h3 data-i18n="f1-title">Departments</h3>
+        <p data-i18n="f1-desc">Mirror your real org structure. Engineering, Design, Research, Operations -- each department gets its own agents, tasks, and budget.</p>
+      </div>
+
+      <div class="feature-card fade-in fade-in-delay-1">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        </div>
+        <h3 data-i18n="f2-title">Heartbeat Engine</h3>
+        <p data-i18n="f2-desc">Agents work autonomously on a schedule. Morning briefs, daily research, code reviews -- they execute without being asked.</p>
+      </div>
+
+      <div class="feature-card fade-in fade-in-delay-2">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <h3 data-i18n="f3-title">Multi-Model Router</h3>
+        <p data-i18n="f3-desc">Claude CLI, OpenRouter, OpenAI, Perplexity. Route each agent to the best model for the job. CLI-first economics keep costs predictable.</p>
+      </div>
+
+      <div class="feature-card fade-in fade-in-delay-1">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+        </div>
+        <h3 data-i18n="f4-title">Guided Configuration</h3>
+        <p data-i18n="f4-desc">Step-by-step setup wizard. Department templates with pre-configured agents. Smart defaults. No YAML files, no guesswork.</p>
+      </div>
+
+      <div class="feature-card fade-in fade-in-delay-2">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+        </div>
+        <h3 data-i18n="f5-title">Routines</h3>
+        <p data-i18n="f5-desc">Multi-step agent workflows on cron, webhook, or manual triggers. Chain agents together. Track every run, every token, every output.</p>
+      </div>
+
+      <div class="feature-card fade-in fade-in-delay-3">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        </div>
+        <h3 data-i18n="f6-title">Cost Control</h3>
+        <p data-i18n="f6-desc">Per-agent, per-department, and company-wide budgets. Automatic warnings and hard stops. CLI savings tracking. Full cost transparency.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ AUDIENCE ════════════════ -->
+<section class="audience" id="audience">
+  <div class="container">
+    <div class="section-label fade-in" data-i18n="aud-label">Who Is This For</div>
+    <h2 class="section-title fade-in" data-i18n="aud-title">Built for leaders, not developers</h2>
+    <p class="section-desc fade-in" data-i18n="aud-desc">You should not need a PhD in prompt engineering to run an AI team.</p>
+
+    <div class="audience-grid">
+      <div class="audience-card fade-in">
+        <div class="audience-icon" style="background: #EFF6FF; color: #1E40AF;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </div>
+        <h3 data-i18n="p1-title">SME CEOs</h3>
+        <p data-i18n="p1-desc">Deploy an AI team that mirrors your org structure. Monitor everything from one dashboard. Stay in the driver's seat without writing a line of code.</p>
+      </div>
+
+      <div class="audience-card fade-in fade-in-delay-1">
+        <div class="audience-icon" style="background: #F0FDF4; color: #16A34A;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+        </div>
+        <h3 data-i18n="p2-title">Ops Managers</h3>
+        <p data-i18n="p2-desc">Automate recurring work with routines. Set budgets, track costs, manage agent output. The tools you need to run AI operations at scale.</p>
+      </div>
+
+      <div class="audience-card fade-in fade-in-delay-2">
+        <div class="audience-icon" style="background: #FEF3C7; color: #D97706;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        </div>
+        <h3 data-i18n="p3-title">Team Leads</h3>
+        <p data-i18n="p3-desc">Manage department-scoped agents. Assign tasks, review deliverables, track progress. Like running a team, but the team never sleeps.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ ORIGIN ════════════════ -->
+<section class="origin">
+  <div class="container">
+    <div class="origin-inner fade-in">
+      <span class="origin-flag" aria-label="Quebec/Canada">&#x1F341;</span>
+      <h2 data-i18n="origin-title">Built in Quebec. Real team behind it.</h2>
+      <p data-i18n="origin-desc">AgentisOrchestra is built by AgentisLab, a Quebec City studio specializing in multi-agent AI systems for businesses. Not a VC-funded startup chasing hype. A real team building real tools for real companies.</p>
+      <p data-i18n="origin-desc2">Open source because the best infrastructure should be shared. Enterprise-grade because your business depends on it.</p>
+      <span class="origin-tagline" data-i18n="origin-tag">agentislab.ai</span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ CTA ════════════════ -->
+<section class="cta-section">
+  <div class="container fade-in">
+    <h2 data-i18n="cta-title">Ready to orchestrate?</h2>
+    <p data-i18n="cta-desc">One command. Five minutes. Your AI team is live.</p>
+    <a href="#get-started" class="btn-primary-light" data-i18n="cta-btn">Get Started Free</a>
+  </div>
+</section>
+
+<!-- ════════════════ FOOTER ════════════════ -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        </div>
+        <span class="footer-brand-text">AgentisLab <span>&middot; Quebec City</span></span>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/agentislab/orchestra" target="_blank">GitHub</a>
+        <a href="https://agentislab.ai" target="_blank">AgentisLab</a>
+        <a href="mailto:alex@agentislab.ai">Contact</a>
+      </div>
+      <span class="footer-copy">&copy; 2026 AgentisLab Inc.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ── Intersection Observer for fade-in ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// ── Copy install command ──
+function copyInstall() {
+  const cmd = document.getElementById('installCmd').textContent;
+  navigator.clipboard.writeText(cmd).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.classList.add('copied');
+    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+    }, 2000);
+  });
+}
+
+// ── Bilingual toggle ──
+const translations = {
+  fr: {
+    'hero-title': 'Votre equipe IA,<br>orchestree.',
+    'hero-desc': 'Departements, agents, routines, budgets. Une seule installation donne a votre entreprise un systeme d\'exploitation IA qui travaille pendant que vous dormez.',
+    'hero-cta': 'Commencer',
+    'hiw-label': 'Comment ca fonctionne',
+    'hiw-title': 'De zero a orchestre en quelques minutes',
+    'hiw-desc': 'Une commande Docker. Un assistant de configuration guide. Votre equipe IA est operationnelle.',
+    'step1-title': 'Installer',
+    'step1-desc': 'Une commande. Docker Compose telecharge tout : application, bridge, base de donnees. Pret en moins d\'une minute.',
+    'step2-title': 'Configurer',
+    'step2-desc': 'L\'assistant vous guide : profil d\'entreprise, fournisseurs IA, departements et roles d\'agents.',
+    'step3-title': 'Deployer',
+    'step3-desc': 'Les agents sont en ligne. Les battements de coeur actifs. Les routines planifiees. Votre equipe IA travaille de facon autonome.',
+    'step4-title': 'Orchestrer',
+    'step4-desc': 'Surveillez, dirigez et faites grandir depuis le tableau de bord. Definissez des objectifs, revisez le travail, gerez les budgets.',
+    'feat-label': 'Fonctionnalites',
+    'feat-title': 'Tout pour gerer une organisation propulsee par l\'IA',
+    'feat-desc': 'Pas un chatbot. Pas un outil de dev. Un systeme d\'exploitation pour equipes IA.',
+    'f1-title': 'Departements',
+    'f1-desc': 'Refletez votre vrai organigramme. Ingenierie, Design, Recherche, Operations -- chaque departement a ses propres agents, taches et budget.',
+    'f2-title': 'Moteur de battement',
+    'f2-desc': 'Les agents travaillent de facon autonome selon un horaire. Briefings matinaux, recherche quotidienne, revues de code -- ils executent sans qu\'on le demande.',
+    'f3-title': 'Routeur multi-modeles',
+    'f3-desc': 'Claude CLI, OpenRouter, OpenAI, Perplexity. Dirigez chaque agent vers le meilleur modele. Le CLI en priorite garde les couts previsibles.',
+    'f4-title': 'Configuration guidee',
+    'f4-desc': 'Assistant etape par etape. Templates de departements preconfigures. Parametres intelligents. Pas de fichiers YAML, pas de devinettes.',
+    'f5-title': 'Routines',
+    'f5-desc': 'Workflows multi-agents sur cron, webhook ou declenchement manuel. Chainez les agents. Suivez chaque execution, chaque token, chaque resultat.',
+    'f6-title': 'Controle des couts',
+    'f6-desc': 'Budgets par agent, par departement et par entreprise. Alertes automatiques et arrets formes. Suivi des economies CLI. Transparence totale.',
+    'aud-label': 'Pour qui',
+    'aud-title': 'Concu pour les leaders, pas les developpeurs',
+    'aud-desc': 'Vous ne devriez pas avoir besoin d\'un doctorat en prompt engineering pour gerer une equipe IA.',
+    'p1-title': 'PDG de PME',
+    'p1-desc': 'Deployez une equipe IA qui reflete votre organisation. Tout surveiller depuis un tableau de bord. Gardez le controle sans ecrire une ligne de code.',
+    'p2-title': 'Directeurs des operations',
+    'p2-desc': 'Automatisez le travail recurrent avec les routines. Definissez des budgets, suivez les couts, gerez les resultats des agents.',
+    'p3-title': 'Chefs d\'equipe',
+    'p3-desc': 'Gerez les agents de votre departement. Assignez des taches, revisez les livrables, suivez la progression. Comme gerer une equipe, mais qui ne dort jamais.',
+    'origin-title': 'Construit au Quebec. Une vraie equipe derriere.',
+    'origin-desc': 'AgentisOrchestra est developpe par AgentisLab, un studio de Quebec specialise en systemes multi-agents IA pour les entreprises. Pas une startup financee par du VC qui court apres le hype. Une vraie equipe qui batit de vrais outils pour de vraies entreprises.',
+    'origin-desc2': 'Open source parce que la meilleure infrastructure devrait etre partagee. De calibre entreprise parce que votre business en depend.',
+    'origin-tag': 'agentislab.ai',
+    'cta-title': 'Pret a orchestrer?',
+    'cta-desc': 'Une commande. Cinq minutes. Votre equipe IA est en ligne.',
+    'cta-btn': 'Commencer gratuitement',
+  },
+  en: {
+    'hero-title': 'Your AI team,<br>orchestrated.',
+    'hero-desc': 'Departments, agents, routines, budgets. One install gives your company an AI operating system that works while you sleep.',
+    'hero-cta': 'Get Started',
+    'hiw-label': 'How It Works',
+    'hiw-title': 'From zero to orchestrated in minutes',
+    'hiw-desc': 'One Docker command. A guided setup wizard. Your AI team is operational.',
+    'step1-title': 'Install',
+    'step1-desc': 'One command. Docker Compose pulls everything: app, bridge, database. Done in under a minute.',
+    'step2-title': 'Configure',
+    'step2-desc': 'The setup wizard walks you through: company profile, AI providers, departments, and agent roles.',
+    'step3-title': 'Deploy',
+    'step3-desc': 'Agents are live. Heartbeats running. Routines scheduled. Your AI team starts working autonomously.',
+    'step4-title': 'Orchestrate',
+    'step4-desc': 'Monitor, direct, and scale from the dashboard. Set goals, review work, manage budgets. Stay in control.',
+    'feat-label': 'Capabilities',
+    'feat-title': 'Everything you need to run an AI-powered organization',
+    'feat-desc': 'Not a chatbot. Not a dev tool. An operating system for AI teams.',
+    'f1-title': 'Departments',
+    'f1-desc': 'Mirror your real org structure. Engineering, Design, Research, Operations -- each department gets its own agents, tasks, and budget.',
+    'f2-title': 'Heartbeat Engine',
+    'f2-desc': 'Agents work autonomously on a schedule. Morning briefs, daily research, code reviews -- they execute without being asked.',
+    'f3-title': 'Multi-Model Router',
+    'f3-desc': 'Claude CLI, OpenRouter, OpenAI, Perplexity. Route each agent to the best model for the job. CLI-first economics keep costs predictable.',
+    'f4-title': 'Guided Configuration',
+    'f4-desc': 'Step-by-step setup wizard. Department templates with pre-configured agents. Smart defaults. No YAML files, no guesswork.',
+    'f5-title': 'Routines',
+    'f5-desc': 'Multi-step agent workflows on cron, webhook, or manual triggers. Chain agents together. Track every run, every token, every output.',
+    'f6-title': 'Cost Control',
+    'f6-desc': 'Per-agent, per-department, and company-wide budgets. Automatic warnings and hard stops. CLI savings tracking. Full cost transparency.',
+    'aud-label': 'Who Is This For',
+    'aud-title': 'Built for leaders, not developers',
+    'aud-desc': 'You should not need a PhD in prompt engineering to run an AI team.',
+    'p1-title': 'SME CEOs',
+    'p1-desc': 'Deploy an AI team that mirrors your org structure. Monitor everything from one dashboard. Stay in the driver\'s seat without writing a line of code.',
+    'p2-title': 'Ops Managers',
+    'p2-desc': 'Automate recurring work with routines. Set budgets, track costs, manage agent output. The tools you need to run AI operations at scale.',
+    'p3-title': 'Team Leads',
+    'p3-desc': 'Manage department-scoped agents. Assign tasks, review deliverables, track progress. Like running a team, but the team never sleeps.',
+    'origin-title': 'Built in Quebec. Real team behind it.',
+    'origin-desc': 'AgentisOrchestra is built by AgentisLab, a Quebec City studio specializing in multi-agent AI systems for businesses. Not a VC-funded startup chasing hype. A real team building real tools for real companies.',
+    'origin-desc2': 'Open source because the best infrastructure should be shared. Enterprise-grade because your business depends on it.',
+    'origin-tag': 'agentislab.ai',
+    'cta-title': 'Ready to orchestrate?',
+    'cta-desc': 'One command. Five minutes. Your AI team is live.',
+    'cta-btn': 'Get Started Free',
+  }
+};
+
+let currentLang = 'en';
+
+function toggleLang() {
+  currentLang = currentLang === 'en' ? 'fr' : 'en';
+  document.getElementById('langToggle').textContent = currentLang === 'en' ? 'FR' : 'EN';
+  document.documentElement.lang = currentLang;
+
+  const t = translations[currentLang];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (t[key]) {
+      el.innerHTML = t[key];
+    }
+  });
+}
+</script>
+</body>
+</html>
