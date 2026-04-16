@@ -234,24 +234,38 @@ Docker: db (PostgreSQL) + app (Next.js)
 Host:   bridge (systemd) + Claude CLI
 ```
 
-**Step A: Install and authenticate Claude CLI**
+**Step A: Create a dedicated user (do NOT run as root)**
 
 ```bash
-# Install
-npm install -g @anthropic-ai/claude-code
-
-# Authenticate (opens browser OAuth)
-claude auth login
-
-# Verify
-claude -p "say hello" --output-format json
+useradd -m -s /bin/bash orchestra
 ```
 
-**Step B: Install bridge on host**
+**Step B: Install and authenticate Claude CLI**
 
 ```bash
-cd /opt/agentis-orchestra/bridge
-pnpm install && pnpm build
+# Install CLI globally
+npm install -g @anthropic-ai/claude-code
+
+# Switch to the orchestra user for authentication
+su - orchestra
+
+# Authenticate (opens browser OAuth -- copy URL to your browser)
+claude auth login
+
+# Verify it works
+claude -p "say hello" --output-format json
+# Must return JSON with "result": "Hello..."
+
+exit  # back to root
+```
+
+**Important:** Claude CLI credentials are stored at `$HOME/.claude/.credentials.json` and `$HOME/.claude.json`. They are **path-locked** -- they only work when HOME matches the directory where `claude auth login` was run. This is why the bridge must run on the host as the `orchestra` user, not inside a Docker container with copied credentials.
+
+**Step C: Install bridge on host**
+
+```bash
+chown -R orchestra:orchestra /opt/agentis-orchestra/bridge
+su - orchestra -c "cd /opt/agentis-orchestra/bridge && pnpm install && pnpm build"
 ```
 
 **Step C: Create systemd service**
@@ -292,48 +306,89 @@ systemctl enable orchestra-bridge
 systemctl start orchestra-bridge
 ```
 
-**Step D: Update Docker app to reach host bridge**
+**Step E: Update Docker to route app to host bridge**
 
-Create `docker-compose.override.yml`:
-```yaml
-services:
-  bridge:
-    entrypoint: ["sleep", "infinity"]
-    restart: "no"
-    ports: !override []
-    healthcheck:
-      test: ["CMD-SHELL", "true"]
-      interval: 5s
-      retries: 1
+The bridge no longer runs in Docker, but compose still defines it. Replace it with a stub and point the app to the host:
 
-  app:
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    environment:
-      BRIDGE_URL: http://host.docker.internal:3847
+```bash
+python3 -c "
+import yaml
+with open('docker-compose.yml') as f:
+    d = yaml.safe_load(f)
+
+# Replace bridge with a no-op stub (no ports, no build)
+d['services']['bridge'] = {
+    'image': 'alpine:3.19',
+    'command': ['sleep', 'infinity'],
+    'restart': 'no',
+    'networks': ['orchestra'],
+    'healthcheck': {'test': ['CMD-SHELL', 'true'], 'interval': '5s', 'retries': 1}
+}
+
+# Point app to host bridge via Docker host gateway
+d['services']['app']['environment']['BRIDGE_URL'] = 'http://host.docker.internal:3847'
+d['services']['app']['extra_hosts'] = ['host.docker.internal:host-gateway']
+d['services']['app']['depends_on'] = {'db': {'condition': 'service_healthy'}}
+
+with open('docker-compose.yml', 'w') as f:
+    yaml.dump(d, f, default_flow_style=False, sort_keys=False)
+print('Done -- bridge stubbed, app points to host')
+"
 ```
 
-Then allow Docker container traffic to the bridge port:
+**Note:** `docker-compose.override.yml` with `ports: []` does NOT work -- compose merges lists. The Python approach above replaces the entire bridge service definition.
+
+**Step F: Allow Docker-to-host traffic (firewall)**
+
+The app container needs to reach port 3847 on the host. Find your Docker subnet and open it:
+
 ```bash
-ufw allow from 172.16.0.0/12 to any port 3847
-ufw allow from 172.16.0.0/12 to any port 3848
-# Also add iptables rules for the specific Docker network subnet
+# Find the subnet
+docker network inspect agentis-orchestra_orchestra --format '{{range .IPAM.Config}}{{.Subnet}}{{end}}'
+# Example: 172.18.0.0/16
+
+# Add iptables rules (use YOUR subnet from above)
 iptables -I INPUT -s 172.18.0.0/16 -p tcp --dport 3847 -j ACCEPT
+iptables -I INPUT -s 172.18.0.0/16 -p tcp --dport 3848 -j ACCEPT
+
+# Make persistent across reboots
+apt-get install -y iptables-persistent
+netfilter-persistent save
 ```
 
-**Step E: Verify**
+**Step G: Start and verify**
+
 ```bash
-# Bridge health
+docker compose up -d
+systemctl start orchestra-bridge
+
+# Verify bridge health
 curl -s -H "Authorization: Bearer $BRIDGE_TOKEN" http://localhost:3847/health
+# {"status":"ok","heartbeat":true,"scheduler":true,"mcp":true,...}
 
-# App sees bridge
+# Verify app sees bridge
 curl -s http://localhost:3000/api/health
-# Should show: {"status":"ok","bridge":"ok"}
+# {"status":"ok","bridge":"ok","timestamp":"..."}
+```
 
-# Bridge management
-systemctl status orchestra-bridge   # Status
-journalctl -u orchestra-bridge -f   # Live logs
-systemctl restart orchestra-bridge  # Restart
+**Bridge management commands:**
+```bash
+systemctl status orchestra-bridge     # Status
+journalctl -u orchestra-bridge -f     # Live logs
+systemctl restart orchestra-bridge    # Restart after code updates
+```
+
+**Re-authenticating Claude CLI (when token expires):**
+```bash
+su - orchestra -c "claude auth login"
+systemctl restart orchestra-bridge
+```
+
+**Updating the bridge after git pull:**
+```bash
+cd /opt/agentis-orchestra && git pull origin main
+su - orchestra -c "cd /opt/agentis-orchestra/bridge && pnpm install && pnpm build"
+systemctl restart orchestra-bridge
 ```
 
 ### Step 5: Complete setup wizard
