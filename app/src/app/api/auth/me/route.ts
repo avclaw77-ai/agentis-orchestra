@@ -5,9 +5,7 @@ import { getSessionUser } from "@/lib/auth"
 export async function GET() {
   const user = await getSessionUser()
   if (!user) {
-    return NextResponse.json(
-      { role: "admin", departmentIds: [], name: "Admin" },
-    )
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
   return NextResponse.json(user)
 }

@@ -175,9 +175,18 @@ export default function SetupPage() {
       }
     }
     if (step === 6) {
-      // Save current department + agents
+      // Save current department + agents (avoid duplicates if editing existing)
       const dept: DepartmentSetup = { ...currentDept, agents: currentAgents }
-      setDepartments((prev) => [...prev, dept])
+      setDepartments((prev) => {
+        const existingIdx = prev.findIndex((d) => d.id === dept.id && dept.id)
+        if (existingIdx >= 0) {
+          // Replace existing (back-then-forward scenario)
+          const updated = [...prev]
+          updated[existingIdx] = dept
+          return updated
+        }
+        return [...prev, dept]
+      })
       // Reset for potential next department
       setCurrentDept({ id: "", name: "", description: "", color: "#3b82f6", template: null, agents: [] })
       setCurrentAgents([])
@@ -259,16 +268,6 @@ export default function SetupPage() {
       return false
     }
   }, [])
-
-  // Auto-test Claude CLI when providers step loads
-  useEffect(() => {
-    if (step === 4) {
-      const cli = providers.find((p) => p.provider === "claude-cli")
-      if (cli && cli.isValid === null && !cli.testing) {
-        handleTestProvider("claude-cli", "")
-      }
-    }
-  }, [step, providers, handleTestProvider])
 
   const handleKeyChange = useCallback((provider: string, apiKey: string) => {
     setProviders((prev) =>

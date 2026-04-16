@@ -210,10 +210,10 @@ export async function POST(req: NextRequest) {
     })
     return response
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Unknown error during setup"
-    console.error("[setup] Transaction failed:", message)
-    return NextResponse.json({ error: message }, { status: 500 })
+    const rawMessage = err instanceof Error ? err.message : "Unknown error"
+    console.error("[setup] Transaction failed:", rawMessage)
+    // Never expose raw DB errors to client
+    return NextResponse.json({ error: "Setup failed. Please check server logs or try again." }, { status: 500 })
   }
 }
 

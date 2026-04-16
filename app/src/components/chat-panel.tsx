@@ -43,8 +43,25 @@ export function ChatPanel({ channel, agentName, agentDisplayName, departmentId, 
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
+  // Load chat history when channel changes
   useEffect(() => {
     setMessages([])
+    if (!channel) return
+    fetch(`/api/chat/messages?channel=${encodeURIComponent(channel)}&limit=50`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (!data) return
+        const msgs = (data.messages || data || []) as Array<{ id: number; role: string; content: string; createdAt: string }>
+        setMessages(
+          msgs.map((m) => ({
+            id: String(m.id),
+            role: m.role as "user" | "assistant",
+            blocks: [{ type: "text" as const, content: m.content }],
+            timestamp: new Date(m.createdAt),
+          }))
+        )
+      })
+      .catch(() => {})
   }, [channel])
 
   function addBlock(messageId: string, block: MessageBlock) {

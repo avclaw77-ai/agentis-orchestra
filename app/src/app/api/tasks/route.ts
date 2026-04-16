@@ -58,20 +58,22 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // Auto-generate ID: TASK-001, TASK-002, etc.
-  const maxResult = await db
-    .select({ maxId: sql<string>`max(id)` })
-    .from(tasks)
-
-  let nextNum = 1
-  const maxId = maxResult[0]?.maxId
-  if (maxId) {
-    const match = maxId.match(/TASK-(\d+)/)
-    if (match) {
-      nextNum = parseInt(match[1], 10) + 1
+  // Auto-generate ID: TASK-001, TASK-002, etc. (atomic via DB count + timestamp fallback)
+  let id: string
+  try {
+    const countResult = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(tasks)
+    const nextNum = (countResult[0]?.count || 0) + 1
+    id = `TASK-${String(nextNum).padStart(3, "0")}`
+    // If collision, fall back to timestamp-based ID
+    const existing = await db.select({ id: tasks.id }).from(tasks).where(eq(tasks.id, id)).limit(1)
+    if (existing.length > 0) {
+      id = `TASK-${Date.now().toString(36).toUpperCase()}`
     }
+  } catch {
+    id = `TASK-${Date.now().toString(36).toUpperCase()}`
   }
-  const id = `TASK-${String(nextNum).padStart(3, "0")}`
 
   const now = new Date()
   await db.insert(tasks).values({

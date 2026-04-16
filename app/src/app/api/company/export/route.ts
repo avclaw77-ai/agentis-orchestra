@@ -15,6 +15,10 @@ import { eq } from "drizzle-orm"
 
 // GET /api/company/export -- Export entire company config as JSON template
 export async function GET() {
+  const { getSessionUser } = await import("@/lib/auth")
+  const user = await getSessionUser()
+  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+  if (user.role !== "admin") return NextResponse.json({ error: "Admin required" }, { status: 403 })
   // Company info
   const [companyRow] = await db.select().from(company)
   if (!companyRow) {
