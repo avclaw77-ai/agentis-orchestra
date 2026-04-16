@@ -71,24 +71,28 @@ export async function POST(req: NextRequest) {
 // =============================================================================
 
 async function testClaudeCli(): Promise<TestProviderResponse> {
-  const cliPath = process.env.CLAUDE_CLI_PATH || "claude"
+  // The bridge runs on the host where Claude CLI is installed.
+  // Ask the bridge's /health endpoint to confirm it's running.
+  const bridgeUrl = process.env.BRIDGE_URL || "http://localhost:3847"
+  const bridgeToken = process.env.BRIDGE_TOKEN || ""
 
   try {
-    const { execFile } = await import("child_process")
-    const { promisify } = await import("util")
-    const execFileAsync = promisify(execFile)
-
-    const { stdout } = await execFileAsync(cliPath, ["--version"], {
-      timeout: 10_000,
+    const res = await fetch(`${bridgeUrl}/health`, {
+      headers: bridgeToken ? { Authorization: `Bearer ${bridgeToken}` } : {},
+      signal: AbortSignal.timeout(5_000),
     })
 
-    return {
-      provider: "claude-cli",
-      valid: true,
-      models: ["claude-cli:opus", "claude-cli:sonnet", "claude-cli:haiku"],
+    if (res.ok) {
+      const data = await res.json()
+      // Bridge is running on host with access to CLI
+      return {
+        provider: "claude-cli",
+        valid: true,
+        models: ["claude-cli:opus", "claude-cli:sonnet", "claude-cli:haiku"],
+      }
     }
-  } catch (err) {
-    // Also check if ANTHROPIC_API_KEY is set as fallback
+
+    // Bridge unreachable but ANTHROPIC_API_KEY exists as fallback
     if (process.env.ANTHROPIC_API_KEY) {
       return {
         provider: "claude-cli",
@@ -100,7 +104,36 @@ async function testClaudeCli(): Promise<TestProviderResponse> {
     return {
       provider: "claude-cli",
       valid: false,
-      error: `Claude CLI not found at "${cliPath}". Install it or set CLAUDE_CLI_PATH.`,
+      error: "Bridge not reachable. Ensure the bridge service is running.",
+    }
+  } catch (err) {
+    // Fallback: try running claude locally (for non-Docker setups)
+    try {
+      const cliPath = process.env.CLAUDE_CLI_PATH || "claude"
+      const { execFile } = await import("child_process")
+      const { promisify } = await import("util")
+      const execFileAsync = promisify(execFile)
+      await execFileAsync(cliPath, ["--version"], { timeout: 10_000 })
+
+      return {
+        provider: "claude-cli",
+        valid: true,
+        models: ["claude-cli:opus", "claude-cli:sonnet", "claude-cli:haiku"],
+      }
+    } catch {
+      if (process.env.ANTHROPIC_API_KEY) {
+        return {
+          provider: "claude-cli",
+          valid: true,
+          models: ["claude-cli:opus", "claude-cli:sonnet", "claude-cli:haiku"],
+        }
+      }
+
+      return {
+        provider: "claude-cli",
+        valid: false,
+        error: "Claude CLI not found. Install it on the host or set ANTHROPIC_API_KEY.",
+      }
     }
   }
 }
