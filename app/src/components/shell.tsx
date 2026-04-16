@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import {
-  Bot,
   LayoutDashboard,
   MessageSquare,
   KanbanSquare,
@@ -136,7 +135,7 @@ export function Shell({
           {!isCollapsed && (
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
-                <Bot size={18} className="text-primary-foreground" />
+                <img src="/logo.svg" alt="Orchestra" className="w-5 h-5" />
               </div>
               <div className="min-w-0">
                 <h1 className="text-sm font-semibold leading-tight truncate">{companyName}</h1>
@@ -146,7 +145,7 @@ export function Shell({
           )}
           {isCollapsed && (
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Bot size={18} className="text-primary-foreground" />
+              <img src="/logo.svg" alt="Orchestra" className="w-5 h-5" />
             </div>
           )}
           {!isMobile && (
@@ -290,6 +289,16 @@ export function Shell({
               </div>
             )}
           </div>
+          {!isCollapsed && (
+            <a
+              href="https://agentislab.ai"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block text-center text-[10px] text-muted-foreground/50 hover:text-muted-foreground/70 transition-colors mt-1"
+            >
+              Powered by AgentisLab
+            </a>
+          )}
         </div>
       </div>
     )
@@ -317,7 +326,7 @@ export function Shell({
         </button>
         <div className="flex items-center gap-2 min-w-0">
           <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center shrink-0">
-            <Bot size={14} className="text-primary-foreground" />
+            <img src="/logo.svg" alt="Orchestra" className="w-4 h-4" />
           </div>
           <span className="text-sm font-semibold truncate">{companyName}</span>
         </div>

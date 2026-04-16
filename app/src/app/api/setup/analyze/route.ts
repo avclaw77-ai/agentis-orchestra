@@ -287,7 +287,7 @@ ${companyContext ? `Additional research about this company:\n${companyContext}` 
   // Parse LLM response
   if (llmResponse) {
     try {
-      const parsed = JSON.parse(llmResponse) as Proposal
+      const parsed = JSON.parse(llmResponse) as unknown as Proposal
       // Add colors to departments
       for (const dept of parsed.departments) {
         if (!dept.color) {

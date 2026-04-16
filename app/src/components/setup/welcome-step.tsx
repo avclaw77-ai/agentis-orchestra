@@ -1,6 +1,6 @@
 "use client"
 
-import { Bot, Monitor, Users, Layers, ArrowRight } from "lucide-react"
+import { Monitor, Users, Layers } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface WelcomeStepProps {
@@ -37,10 +37,13 @@ export function WelcomeStep({ locale, onLocaleChange }: WelcomeStepProps) {
       {/* Brand */}
       <div className="flex items-center gap-3 mb-2">
         <div className="w-11 h-11 rounded-xl bg-primary flex items-center justify-center">
-          <Bot className="w-6 h-6 text-white" />
+          <img src="/logo.svg" alt="AgentisOrchestra" className="w-7 h-7" />
         </div>
-        <div className="text-xl font-extrabold tracking-tight text-foreground">
-          Agentis<span className="text-primary">Orchestra</span>
+        <div>
+          <div className="text-xl font-extrabold tracking-tight text-foreground">
+            Agentis<span className="text-primary">Orchestra</span>
+          </div>
+          <div className="text-[11px] text-muted-foreground/60 -mt-0.5">by AgentisLab</div>
         </div>
       </div>
 

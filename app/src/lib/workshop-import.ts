@@ -331,7 +331,7 @@ export function validateWorkshopBundle(data: unknown): {
     }
   }
 
-  return { valid: true, bundle: obj as WorkshopBundle }
+  return { valid: true, bundle: obj as unknown as WorkshopBundle }
 }
 
 // =============================================================================
