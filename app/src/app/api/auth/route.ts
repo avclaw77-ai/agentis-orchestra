@@ -65,6 +65,12 @@ export async function POST(req: NextRequest) {
       path: "/",
       expires: expiresAt,
     })
+    // Setup is done if we're registering (setup flow calls register)
+    response.cookies.set("ao_setup_done", "1", {
+      path: "/",
+      maxAge: 315360000,
+      httpOnly: false,
+    })
     return response
   }
 
@@ -100,6 +106,12 @@ export async function POST(req: NextRequest) {
       sameSite: "lax",
       path: "/",
       expires: expiresAt,
+    })
+    // Set setup-done cookie (login implies setup is complete)
+    response.cookies.set("ao_setup_done", "1", {
+      path: "/",
+      maxAge: 315360000,
+      httpOnly: false,
     })
     return response
   }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Bot, LogIn } from "lucide-react"
+import { LogIn } from "lucide-react"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -38,11 +38,16 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-            <Bot size={22} className="text-primary-foreground" />
+        <div className="flex flex-col items-center gap-3 mb-8">
+          <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
+            <img src="/logo-mark.svg" alt="Orchestra" className="w-7 h-7" />
           </div>
-          <h1 className="text-xl font-semibold">AgentisOrchestra</h1>
+          <div className="text-center">
+            <h1 className="text-xl font-extrabold tracking-tight">
+              Agentis<span className="text-primary">Orchestra</span>
+            </h1>
+            <p className="text-xs text-muted-foreground mt-0.5">Sign in to your workspace</p>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-card border border-border rounded-xl p-6 space-y-4">
@@ -86,6 +91,15 @@ export default function LoginPage() {
             {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
+
+        <a
+          href="https://agentislab.ai"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block text-center text-[11px] text-muted-foreground/50 hover:text-muted-foreground/70 transition-colors mt-6"
+        >
+          Powered by AgentisLab
+        </a>
       </div>
     </div>
   )
