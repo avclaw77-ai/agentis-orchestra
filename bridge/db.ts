@@ -32,6 +32,11 @@ function isReady(): boolean {
   return !!sql
 }
 
+/** Expose the raw sql handle for MCP tools (internal use only) */
+export function _sql(): ReturnType<typeof postgres> | null {
+  return sql ?? null
+}
+
 // =============================================================================
 // Chat Messages
 // =============================================================================

@@ -9,6 +9,9 @@ import { heartbeatEngine } from "./heartbeat.js"
 import { routineEngine } from "./routine-engine.js"
 import { scheduler } from "./scheduler.js"
 import { createWebhookRouter } from "./webhook-handler.js"
+import { MCPServer } from "./mcp/server.js"
+import { getAllTools as getMCPTools } from "./mcp/tools.js"
+import { pluginLoader } from "./plugins/loader.js"
 
 const PORT = parseInt(process.env.PORT || "3847", 10)
 const BRIDGE_TOKEN = process.env.BRIDGE_TOKEN || ""
@@ -23,6 +26,32 @@ if (process.env.DATABASE_URL) initCostTracker(process.env.DATABASE_URL)
 db.resetAllAgentsIdle()
 heartbeatEngine.start(10_000) // 10-second tick interval
 scheduler.start() // Routine cron scheduler
+
+// =============================================================================
+// Initialize MCP server + plugin system
+// =============================================================================
+
+const mcpServer = new MCPServer()
+
+async function initMCPAndPlugins() {
+  // Register core tools
+  mcpServer.registerTools(getMCPTools())
+
+  // Discover and load plugins
+  await pluginLoader.loadAll()
+
+  // Register plugin tools with MCP server
+  const pluginTools = pluginLoader.getAllTools()
+  mcpServer.registerTools(pluginTools)
+
+  // Start MCP server
+  await mcpServer.start()
+  console.log(`[bridge] MCP server: ${mcpServer.getToolCount()} tools registered`)
+}
+
+initMCPAndPlugins().catch((err) => {
+  console.error("[bridge] MCP/plugin init error:", err)
+})
 
 // =============================================================================
 // Express setup (JSON routes)
@@ -57,6 +86,9 @@ app.get("/health", (_req, res) => {
     sessions: sessionManager.activeSessions(),
     heartbeat: heartbeatEngine.isRunning(),
     scheduler: scheduler.isRunning(),
+    mcp: mcpServer.isRunning(),
+    mcpTools: mcpServer.getToolCount(),
+    plugins: pluginLoader.getLoadedPlugins().length,
   })
 })
 
@@ -161,6 +193,28 @@ app.get("/runs/:id", async (req, res) => {
     return
   }
   res.json({ run })
+})
+
+// =============================================================================
+// Plugin API routes
+// =============================================================================
+
+// List loaded plugins
+app.get("/plugins", (_req, res) => {
+  res.json({ plugins: pluginLoader.getLoadedPlugins() })
+})
+
+// Restart a crashed plugin
+app.post("/plugins/:name/restart", async (req, res) => {
+  const success = await pluginLoader.restartPlugin(req.params.name)
+  if (success) {
+    // Re-register plugin tools with MCP
+    const pluginTools = pluginLoader.getAllTools()
+    mcpServer.registerTools(pluginTools)
+    res.json({ restarted: true })
+  } else {
+    res.status(404).json({ error: "Plugin not found or restart failed" })
+  }
 })
 
 // =============================================================================
@@ -328,4 +382,6 @@ server.listen(PORT, "0.0.0.0", () => {
   console.log(`[bridge] Adapter mode: ${process.env.ADAPTER_MODE || "sdk"}`)
   console.log(`[bridge] Heartbeat engine: ${heartbeatEngine.isRunning() ? "running" : "stopped"}`)
   console.log(`[bridge] Routine scheduler: ${scheduler.isRunning() ? "running" : "stopped"}`)
+  console.log(`[bridge] MCP server: ${mcpServer.isRunning() ? `running on :${process.env.MCP_PORT || "3848"}` : "starting..."}`)
+  console.log(`[bridge] Plugins: ${pluginLoader.getLoadedPlugins().length} loaded`)
 })
