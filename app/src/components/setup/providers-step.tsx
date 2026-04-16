@@ -115,6 +115,32 @@ function ProviderCard({
         </div>
         <StatusBadge status={status} />
 
+        {/* CLI: manual detect button */}
+        {isCli && (
+          <div className="mt-2.5">
+            <button
+              onClick={() => onTest(status.provider, "")}
+              disabled={status.testing}
+              className={cn(
+                "px-3 py-[7px] border-[1.5px] rounded-md text-xs font-semibold whitespace-nowrap transition-all",
+                status.testing
+                  ? "border-border text-muted-foreground bg-white cursor-wait"
+                  : status.isValid === true
+                    ? "border-emerald-500 text-emerald-600 bg-emerald-50"
+                    : "border-border text-muted-foreground bg-white hover:border-primary hover:text-primary"
+              )}
+            >
+              {status.testing ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : status.isValid === true ? (
+                <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" /> Detected</span>
+              ) : (
+                "Detect CLI"
+              )}
+            </button>
+          </div>
+        )}
+
         {/* API key input (not for CLI) */}
         {!isCli && (
           <div className="flex gap-2 items-center mt-2.5">
