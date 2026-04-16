@@ -362,7 +362,7 @@ function BlockRenderer({ block, role }: { block: MessageBlock; role: string }) {
           <Wrench size={12} className="text-blue-500 shrink-0 mt-0.5 animate-pulse" />
           <div className="min-w-0">
             <span className="font-medium text-blue-700">Using: {block.tool}</span>
-            {block.input && (
+            {block.input != null && (
               <pre className="text-blue-500 mt-1 text-[10px] font-mono overflow-x-auto max-w-full whitespace-pre-wrap">
                 {typeof block.input === "string" ? block.input : JSON.stringify(block.input, null, 2).slice(0, 500)}
               </pre>
