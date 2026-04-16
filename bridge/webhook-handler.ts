@@ -40,7 +40,7 @@ function validateSignature(
 export function createWebhookRouter(): Router {
   const router = createRouter()
 
-  router.post("/hooks/:path(*)", async (req: Request, res: Response) => {
+  router.post("/hooks/:path", async (req: Request, res: Response) => {
     const hookPath = `/hooks/${req.params.path}`
 
     try {
