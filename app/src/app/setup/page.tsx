@@ -329,7 +329,7 @@ export default function SetupPage() {
           <DepartmentStep
             department={currentDept}
             templates={Object.entries(DEPARTMENT_TEMPLATES).map(([key, t]) => ({ key, ...t }))}
-            onChange={(d) => setCurrentDept(d)}
+            onChange={(d) => setCurrentDept({ ...d, agents: currentDept.agents })}
           />
         )}
         {step === 6 && (
