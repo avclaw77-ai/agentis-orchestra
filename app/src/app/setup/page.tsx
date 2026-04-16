@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DEPARTMENT_TEMPLATES, getTemplate } from "@/lib/templates"
@@ -192,6 +192,35 @@ export default function SetupPage() {
   }
 
   // ─── Provider testing ──────────────────────────────────────────────────────
+
+  // Auto-detect Claude CLI when providers step loads
+  const cliCheckedRef = useRef(false)
+  useEffect(() => {
+    if (step === 4 && !cliCheckedRef.current) {
+      cliCheckedRef.current = true
+      // Fire CLI detection
+      fetch("/api/setup/test-provider", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider: "claude-cli" }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          setProviders((prev) =>
+            prev.map((p) =>
+              p.provider === "claude-cli" ? { ...p, isValid: data.valid === true, testing: false } : p
+            )
+          )
+        })
+        .catch(() => {
+          setProviders((prev) =>
+            prev.map((p) =>
+              p.provider === "claude-cli" ? { ...p, isValid: false, testing: false } : p
+            )
+          )
+        })
+    }
+  }, [step])
 
   const handleTestProvider = useCallback(async (provider: string, apiKey: string): Promise<boolean> => {
     setProviders((prev) =>
