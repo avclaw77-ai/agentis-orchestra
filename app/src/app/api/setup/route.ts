@@ -202,7 +202,13 @@ export async function POST(req: NextRequest) {
       providerCount: body.providers.length,
     }
 
-    return NextResponse.json(result, { status: 201 })
+    const response = NextResponse.json(result, { status: 201 })
+    response.cookies.set("ao_setup_done", "1", {
+      path: "/",
+      maxAge: 315360000, // 10 years
+      httpOnly: false, // middleware needs to read it
+    })
+    return response
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Unknown error during setup"
@@ -223,12 +229,24 @@ export async function GET() {
     return NextResponse.json({ setupCompleted: false })
   }
 
-  return NextResponse.json({
-    setupCompleted: rows[0].setupCompletedAt !== null,
-    company: rows[0].setupCompletedAt
+  const isComplete = rows[0].setupCompletedAt !== null
+  const response = NextResponse.json({
+    setupCompleted: isComplete,
+    company: isComplete
       ? { name: rows[0].name, locale: rows[0].locale }
       : null,
   })
+
+  // Ensure cookie is set if setup is done (handles cleared-cache scenario)
+  if (isComplete) {
+    response.cookies.set("ao_setup_done", "1", {
+      path: "/",
+      maxAge: 315360000,
+      httpOnly: false,
+    })
+  }
+
+  return response
 }
 
 // =============================================================================
