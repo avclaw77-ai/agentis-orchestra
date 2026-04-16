@@ -952,35 +952,10 @@ export default function DashboardPage() {
           <ApprovalFeed
             approvals={approvalsList}
             comments={approvalComments}
-            agents={filteredAgents}
-            onApprove={async (id, note) => {
-              await fetch("/api/approvals", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id, status: "approved", decisionNote: note }),
-              })
-              fetchApprovals()
-            }}
-            onReject={async (id, note) => {
-              await fetch("/api/approvals", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id, status: "rejected", decisionNote: note }),
-              })
-              fetchApprovals()
-            }}
-            onComment={async (approvalId, body) => {
-              await fetch(`/api/approvals/${approvalId}/comments`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ body, authorUserId: "admin" }),
-              })
-              const res = await fetch(`/api/approvals/${approvalId}/comments`)
-              if (res.ok) {
-                const comments = await res.json()
-                setApprovalComments((prev) => ({ ...prev, [approvalId]: comments }))
-              }
-            }}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            onRequestRevision={handleRequestRevision}
+            onComment={handleApprovalComment}
           />
         </div>
       )}
