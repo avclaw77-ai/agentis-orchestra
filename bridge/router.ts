@@ -8,7 +8,7 @@
  * 2. Available providers (which API keys are configured?)
  * 3. Cost preference (free > cheap > standard > premium)
  * 4. Agent-level overrides (agent config can pin a model)
- * 5. Workspace-level defaults
+ * 5. Department-level defaults
  */
 
 import {

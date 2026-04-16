@@ -550,7 +550,7 @@ export default function DashboardPage() {
       )}
 
       {view === "chat" && (
-        <div className="flex h-[calc(100vh-64px)]">
+        <div className="flex h-full">
           <div className="w-64 border-r border-border p-4 overflow-y-auto">
             <AgentRoster
               agents={visibleAgents}

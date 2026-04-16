@@ -10,7 +10,7 @@ export type Locale = "en" | "fr"
 export type Provider = "claude-cli" | "openrouter" | "perplexity" | "openai"
 
 // =============================================================================
-// Company & Departments (replaces Workspace)
+// Company & Departments
 // =============================================================================
 
 export interface Company {

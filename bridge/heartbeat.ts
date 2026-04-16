@@ -48,6 +48,7 @@ interface PendingExecution {
 
 class HeartbeatEngine {
   private running = false
+  private tickInProgress = false
   private tickInterval: NodeJS.Timeout | null = null
   private pendingExecutions = new Map<string, PendingExecution>()
   private activeAgents = new Set<string>()
@@ -80,6 +81,8 @@ class HeartbeatEngine {
   // ---------------------------------------------------------------------------
 
   private async tick(): Promise<void> {
+    if (this.tickInProgress) return
+    this.tickInProgress = true
     try {
       // 1. Get all pending wakeup requests
       const wakeups = (await db.getPendingWakeups()) as WakeupRecord[]
@@ -147,6 +150,8 @@ class HeartbeatEngine {
       }
     } catch (err) {
       console.error("[heartbeat] Tick error:", err)
+    } finally {
+      this.tickInProgress = false
     }
   }
 

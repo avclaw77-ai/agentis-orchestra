@@ -6,17 +6,14 @@
  * and enforces cascading budget policies (agent -> department -> company).
  */
 
-import postgres from "postgres"
+import { _sql } from "./db.js"
 
-let sql: ReturnType<typeof postgres>
-
-export function initCostTracker(dbUrl: string): void {
-  sql = postgres(dbUrl, { max: 5, idle_timeout: 30 })
-  console.log("[cost-tracker] Initialized")
+function getSql() {
+  return _sql()
 }
 
 function isReady(): boolean {
-  return !!sql
+  return !!getSql()
 }
 
 // =============================================================================
@@ -109,7 +106,7 @@ export interface RecordCostEventParams {
 export async function recordCostEvent(params: RecordCostEventParams): Promise<void> {
   if (!isReady()) return
   try {
-    await sql`
+    await getSql()!`
       INSERT INTO cost_events (
         department_id, agent_id, run_id, model_id, provider,
         input_tokens, output_tokens, cached_input_tokens,
@@ -154,20 +151,20 @@ export async function getMonthlySpend(
   try {
     let rows
     if (scopeType === "company") {
-      rows = await sql`
+      rows = await getSql()!`
         SELECT COALESCE(SUM(cost_cents), 0) AS total
         FROM cost_events
         WHERE created_at >= date_trunc('month', CURRENT_DATE)
       `
     } else if (scopeType === "department") {
-      rows = await sql`
+      rows = await getSql()!`
         SELECT COALESCE(SUM(cost_cents), 0) AS total
         FROM cost_events
         WHERE department_id = ${scopeId}
           AND created_at >= date_trunc('month', CURRENT_DATE)
       `
     } else {
-      rows = await sql`
+      rows = await getSql()!`
         SELECT COALESCE(SUM(cost_cents), 0) AS total
         FROM cost_events
         WHERE agent_id = ${scopeId}
@@ -193,7 +190,7 @@ export async function checkBudget(
     // CASCADE: agent -> department -> company
 
     // 1. Check agent-level budget
-    const agentPolicies = await sql`
+    const agentPolicies = await getSql()!`
       SELECT * FROM budget_policies
       WHERE scope_type = 'agent'
         AND scope_id = ${agentId}
@@ -218,7 +215,7 @@ export async function checkBudget(
 
     // 2. Check department-level budget
     if (departmentId) {
-      const deptPolicies = await sql`
+      const deptPolicies = await getSql()!`
         SELECT * FROM budget_policies
         WHERE scope_type = 'department'
           AND scope_id = ${departmentId}
@@ -243,7 +240,7 @@ export async function checkBudget(
     }
 
     // 3. Check company-level budget
-    const companyPolicies = await sql`
+    const companyPolicies = await getSql()!`
       SELECT * FROM budget_policies
       WHERE scope_type = 'company'
         AND scope_id IS NULL
@@ -291,7 +288,7 @@ async function createIncidentIfNeeded(
   if (!isReady()) return
   try {
     // Check if there's already an open incident for this policy + type this month
-    const existing = await sql`
+    const existing = await getSql()!`
       SELECT 1 FROM budget_incidents
       WHERE policy_id = ${policyId}
         AND threshold_type = ${type}
@@ -301,7 +298,7 @@ async function createIncidentIfNeeded(
     `
     if (existing.length > 0) {
       // Update observed amount
-      await sql`
+      await getSql()!`
         UPDATE budget_incidents
         SET amount_observed = ${observed}, updated_at = NOW()
         WHERE policy_id = ${policyId}
@@ -312,7 +309,7 @@ async function createIncidentIfNeeded(
       return
     }
 
-    await sql`
+    await getSql()!`
       INSERT INTO budget_incidents (
         policy_id, scope_type, scope_id, threshold_type,
         amount_limit, amount_observed, status

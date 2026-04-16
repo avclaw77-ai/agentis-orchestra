@@ -1,3 +1,70 @@
+/**
+ * AgentisOrchestra Database Schema
+ *
+ * 34 tables organized by domain:
+ *
+ *  CORE
+ *   1. company              -- Singleton company record
+ *   2. departments           -- Organizational units
+ *   3. providerKeys          -- AI provider credentials (encrypted)
+ *
+ *  AUTH
+ *   4. users                 -- Admin/viewer accounts
+ *   5. sessions              -- Session tokens
+ *
+ *  AGENTS
+ *   6. agents                -- Agent registry
+ *   7. agentConfigs          -- Per-agent configuration (model, persona, guardrails)
+ *   8. agentConfigRevisions  -- Config change audit trail
+ *
+ *  SKILLS
+ *   9. skills                -- Skill definitions
+ *  10. agentSkills           -- Agent-to-skill assignments
+ *
+ *  TASKS
+ *  11. projects              -- Project groupings
+ *  12. tasks                 -- Kanban task board items
+ *  13. taskComments          -- Discussion on tasks
+ *  14. labels                -- Task categorization labels
+ *  15. taskLabels            -- Task-to-label join table
+ *
+ *  CHAT
+ *  16. chatMessages          -- Agent conversation history
+ *
+ *  AUDIT
+ *  17. activityLog           -- Agent action audit trail
+ *  18. decisions             -- Decision log entries
+ *
+ *  ROUTINES
+ *  19. routines              -- Named multi-step workflows
+ *  20. routineTriggers       -- Cron / webhook / manual triggers
+ *  21. routineSteps          -- Ordered steps within a routine
+ *  22. routineRuns           -- Execution records for routine runs
+ *
+ *  HEARTBEAT
+ *  23. agentRuntimeState     -- Per-agent runtime state and token totals
+ *  24. heartbeatRuns         -- Individual heartbeat execution records
+ *
+ *  COST TRACKING
+ *  25. costEvents            -- Per-call token/cost ledger
+ *  26. budgetPolicies        -- Budget limits (agent/department/company)
+ *  27. budgetIncidents       -- Threshold breach records
+ *  28. agentWakeupRequests   -- Pending wakeup queue
+ *
+ *  GOALS
+ *  29. goals                 -- Strategic goal hierarchy
+ *
+ *  APPROVALS
+ *  30. approvalRequests      -- Human-in-the-loop governance
+ *  31. approvalComments      -- Discussion on approval requests
+ *
+ *  COMPANY SKILLS
+ *  32. companySkills         -- Versioned skill library
+ *
+ *  KNOWLEDGE
+ *  33. documents             -- Department knowledge base
+ */
+
 import {
   pgTable,
   text,
@@ -26,7 +93,7 @@ export const company = pgTable("company", {
 })
 
 // =============================================================================
-// DEPARTMENTS -- Organizational units (replaces workspaces)
+// DEPARTMENTS -- Organizational units
 // =============================================================================
 
 export const departments = pgTable("departments", {
@@ -224,11 +291,15 @@ export const tasks = pgTable(
     notes: text("notes"),
     executionLockedAt: timestamp("execution_locked_at"), // atomic checkout
     checkoutRunId: text("checkout_run_id"), // which heartbeat run owns this task
-    parentTaskId: text("parent_task_id"), // references tasks(id), set null on delete handled at app level
+    parentTaskId: text("parent_task_id").references((): any => tasks.id, {
+      onDelete: "set null",
+    }),
     phase: text("phase"), // research | spec | design | build | qa | deploy
     estimatedTokens: integer("estimated_tokens"),
     actualTokens: integer("actual_tokens").default(0),
-    goalId: text("goal_id"), // references goals(id), set null on delete handled at app level
+    goalId: text("goal_id").references((): any => goals.id, {
+      onDelete: "set null",
+    }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
@@ -625,7 +696,9 @@ export const goals = pgTable(
     }), // NULL = company mission
     title: text("title").notNull(),
     description: text("description"),
-    parentId: text("parent_id"), // references goals(id), set null on delete handled at app level
+    parentId: text("parent_id").references((): any => goals.id, {
+      onDelete: "set null",
+    }),
     status: text("status").default("planned"), // planned | active | completed | cancelled
     ownerAgentId: text("owner_agent_id").references(() => agents.id, {
       onDelete: "set null",

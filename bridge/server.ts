@@ -4,7 +4,7 @@ import cors from "cors"
 import { SessionManager } from "./session-manager.js"
 import { MODEL_REGISTRY, type Provider } from "./models.js"
 import * as db from "./db.js"
-import { initCostTracker } from "./cost-tracker.js"
+// cost-tracker now shares db.ts pool -- no separate init needed
 import { heartbeatEngine } from "./heartbeat.js"
 import { routineEngine } from "./routine-engine.js"
 import { scheduler } from "./scheduler.js"
@@ -22,7 +22,6 @@ const KEEPALIVE_MS = 15_000
 // =============================================================================
 
 db.initDb()
-if (process.env.DATABASE_URL) initCostTracker(process.env.DATABASE_URL)
 db.resetAllAgentsIdle()
 heartbeatEngine.start(10_000) // 10-second tick interval
 scheduler.start() // Routine cron scheduler
@@ -296,7 +295,7 @@ const server = http.createServer((req, res) => {
   let body = ""
   req.on("data", (chunk) => (body += chunk))
   req.on("end", async () => {
-    let parsed: { channel: string; message: string; workspaceId?: string }
+    let parsed: { channel: string; message: string; departmentId?: string }
     try {
       parsed = JSON.parse(body)
     } catch {
@@ -305,7 +304,7 @@ const server = http.createServer((req, res) => {
       return
     }
 
-    const { channel, message, workspaceId } = parsed
+    const { channel, message, departmentId } = parsed
 
     if (!channel || !message) {
       res.writeHead(400, { "Content-Type": "application/json" })
@@ -345,7 +344,7 @@ const server = http.createServer((req, res) => {
       await heartbeatEngine.triggerChat(
         channel,         // agent ID = channel
         message,
-        workspaceId || undefined,
+        departmentId || undefined,
         {
           onToken: (token: string) => {
             if (!cancelled) send("token", { token })

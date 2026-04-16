@@ -16,7 +16,7 @@ const TIMEOUT_MS = 10 * 60 * 1000 // 10 minutes
 export interface ExecuteOptions {
   channel: string
   message: string
-  workspaceId: string
+  departmentId: string
   // Model routing
   agentModel?: string          // pinned model ID from agent config
   taskType?: TaskType          // hint for router (default: "conversation")

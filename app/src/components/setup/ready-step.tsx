@@ -1,6 +1,6 @@
 "use client"
 
-import { CheckCircle, ArrowRight } from "lucide-react"
+import { CheckCircle } from "lucide-react"
 
 interface ReadyStepDepartment {
   name: string
@@ -13,6 +13,7 @@ interface ReadyStepProps {
   departments: ReadyStepDepartment[]
   providerCount: number
   locale: string
+  onAddDepartment?: () => void
 }
 
 export function ReadyStep({
@@ -20,6 +21,7 @@ export function ReadyStep({
   departments,
   providerCount,
   locale,
+  onAddDepartment,
 }: ReadyStepProps) {
   const isFr = locale === "fr"
   const totalAgents = departments.reduce(
@@ -39,8 +41,8 @@ export function ReadyStep({
         </h2>
         <p className="text-[15px] text-muted-foreground mb-7">
           {isFr
-            ? "Votre espace de travail est configure."
-            : "Your workspace is configured and ready to go."}
+            ? "Votre organisation est configuree."
+            : "Your organization is configured and ready to go."}
         </p>
       </div>
 
@@ -118,13 +120,17 @@ export function ReadyStep({
         </div>
       </div>
 
-      {/* Launch button */}
-      <div className="text-center mt-7">
-        <button className="inline-flex items-center justify-center gap-2 px-9 py-3.5 bg-primary text-white text-base font-bold rounded-[10px] transition-all hover:bg-primary/90 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/30 w-full">
-          {isFr ? "Lancer le tableau de bord" : "Launch Dashboard"}
-          <ArrowRight className="w-[18px] h-[18px]" />
-        </button>
-      </div>
+      {/* Add another department */}
+      {onAddDepartment && (
+        <div className="text-center mt-5">
+          <button
+            onClick={onAddDepartment}
+            className="text-sm font-medium text-primary hover:underline"
+          >
+            {isFr ? "+ Ajouter un autre departement" : "+ Add another department"}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

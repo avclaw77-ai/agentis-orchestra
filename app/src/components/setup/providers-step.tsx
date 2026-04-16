@@ -15,7 +15,6 @@ export interface ProviderStatus {
   provider: string
   name: string
   description: string
-  icon: string
   color: string
   apiKey: string
   isValid: boolean | null
@@ -28,11 +27,11 @@ interface ProvidersStepProps {
   onKeyChange: (provider: string, key: string) => void
 }
 
-const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-  terminal: Terminal,
-  cpu: Cpu,
-  search: Search,
-  brain: Brain,
+const PROVIDER_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  "claude-cli": Terminal,
+  openrouter: Cpu,
+  perplexity: Search,
+  openai: Brain,
 }
 
 function StatusBadge({ status }: { status: ProviderStatus }) {
@@ -86,7 +85,7 @@ function ProviderCard({
   onTest: (provider: string, key: string) => Promise<boolean>
   onKeyChange: (provider: string, key: string) => void
 }) {
-  const Icon = ICON_MAP[status.icon] || Terminal
+  const Icon = PROVIDER_ICON_MAP[status.provider] || Terminal
   const isCli = status.provider === "claude-cli"
 
   return (

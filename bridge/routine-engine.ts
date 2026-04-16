@@ -248,7 +248,7 @@ class RoutineEngine {
     triggerPayload: string
   ): Promise<{ output: string; tokens: number; costCents: number }> {
     // Interpolate prompt template
-    let prompt = step.prompt_template
+    const prompt = step.prompt_template
       .replace(/\{\{prev_output\}\}/g, prevOutput)
       .replace(/\{\{trigger_payload\}\}/g, triggerPayload)
 
@@ -285,18 +285,13 @@ class RoutineEngine {
 
     const result = await outputPromise
 
-    // Estimate tokens from prompt and output (rough heuristic)
-    const estimatedInputTokens = Math.ceil(prompt.length / 4)
-    const estimatedOutputTokens = Math.ceil(result.length / 4)
-    const totalTokens = estimatedInputTokens + estimatedOutputTokens
-
-    // Cost estimation: ~$0.003 per 1K tokens average (conservative)
-    const costCents = Math.ceil((totalTokens / 1000) * 0.3)
-
+    // Token counts and costs are tracked by the heartbeat engine via cost-tracker.
+    // We return zeros here to avoid double-counting -- the authoritative cost data
+    // lives in the cost_events table, not in routine_runs.step_results.
     return {
       output: typeof result === "string" ? result : fullOutput,
-      tokens: totalTokens,
-      costCents,
+      tokens: 0,
+      costCents: 0,
     }
   }
 
