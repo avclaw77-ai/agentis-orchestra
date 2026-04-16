@@ -51,7 +51,11 @@ export async function executeCLI(
 
   return new Promise((resolve, reject) => {
     const proc = spawn(cliPath, args, {
-      env: { PATH: process.env.PATH || "/usr/local/bin:/usr/bin:/bin" },
+      env: {
+        PATH: process.env.PATH || "/usr/local/bin:/usr/bin:/bin",
+        HOME: process.env.HOME || "/root",
+        CLAUDE_CONFIG_DIR: process.env.CLAUDE_CONFIG_DIR || "",
+      },
       stdio: ["ignore", "pipe", "pipe"],
     })
 
