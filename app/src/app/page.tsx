@@ -1,9 +1,12 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { toast } from "sonner"
 import { Shell, type View } from "@/components/shell"
 import { AgentRoster } from "@/components/agent-roster"
+import { AgentProfile } from "@/components/agent-profile"
 import { ChatPanel } from "@/components/chat-panel"
+import { DashboardHome } from "@/components/dashboard-home"
 import { KanbanBoard } from "@/components/kanban-board"
 import { TaskDetail } from "@/components/task-detail"
 import { CreateTaskDialog } from "@/components/create-task-dialog"
@@ -14,8 +17,10 @@ import { RoutineBuilder } from "@/components/routine-builder"
 import { GoalTree } from "@/components/goal-tree"
 import { ApprovalFeed } from "@/components/approval-feed"
 import { SkillLibrary } from "@/components/skill-library"
+import { DecisionLog } from "@/components/decision-log"
 import type {
   Agent,
+  AgentConfig,
   Task,
   TaskComment,
   TaskStatus,
@@ -68,8 +73,12 @@ export default function DashboardPage() {
   // Skills state
   const [skillsList, setSkillsList] = useState<CompanySkill[]>([])
 
+  // Agent profile state
+  const [selectedAgentForProfile, setSelectedAgentForProfile] = useState<string | null>(null)
+  const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
+
   // Settings sub-tab
-  const [settingsTab, setSettingsTab] = useState<"general" | "approvals" | "skills" | "export">("general")
+  const [settingsTab, setSettingsTab] = useState<"general" | "approvals" | "skills" | "decisions" | "export">("general")
 
   useEffect(() => {
     fetchData()
@@ -146,21 +155,28 @@ export default function DashboardPage() {
   }
 
   async function handleStatusChange(taskId: string, newStatus: TaskStatus) {
-    await fetch("/api/tasks", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: taskId, status: newStatus }),
-    })
-    await fetchTasks()
-    // Refresh detail if open
-    if (selectedTaskId === taskId) {
-      const res = await fetch(`/api/tasks/${taskId}`)
-      if (res.ok) {
-        const data = await res.json()
-        const { comments, ...task } = data
-        setSelectedTask(task)
-        setTaskComments(comments || [])
+    try {
+      const res = await fetch("/api/tasks", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: taskId, status: newStatus }),
+      })
+      if (!res.ok) throw new Error("Failed to update status")
+      const statusLabel = newStatus === "in-progress" ? "In Progress" : newStatus.charAt(0).toUpperCase() + newStatus.slice(1)
+      toast.success(`Moved ${taskId} to ${statusLabel}`)
+      await fetchTasks()
+      // Refresh detail if open
+      if (selectedTaskId === taskId) {
+        const detailRes = await fetch(`/api/tasks/${taskId}`)
+        if (detailRes.ok) {
+          const data = await detailRes.json()
+          const { comments, ...task } = data
+          setSelectedTask(task)
+          setTaskComments(comments || [])
+        }
       }
+    } catch {
+      toast.error(`Failed to update ${taskId} status`)
     }
   }
 
@@ -474,6 +490,77 @@ export default function DashboardPage() {
   }
 
   // -------------------------------------------------------------------------
+  // Agent Profile
+  // -------------------------------------------------------------------------
+
+  // Fetch config when profile opens
+  useEffect(() => {
+    if (!selectedAgentForProfile) {
+      setAgentConfig(null)
+      return
+    }
+    async function loadConfig() {
+      try {
+        const res = await fetch(`/api/agents/${selectedAgentForProfile}/config`)
+        if (res.ok) {
+          const data = await res.json()
+          setAgentConfig(data)
+        }
+      } catch {
+        // Config will load once available
+      }
+    }
+    loadConfig()
+  }, [selectedAgentForProfile])
+
+  async function handleSaveAgentConfig(config: Partial<AgentConfig>) {
+    if (!selectedAgentForProfile) return
+    try {
+      const res = await fetch(`/api/agents/${selectedAgentForProfile}/config`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(config),
+      })
+      if (res.ok) {
+        const updated = await res.json()
+        setAgentConfig(updated)
+        toast.success("Agent config saved")
+      } else {
+        toast.error("Failed to save agent config")
+      }
+    } catch {
+      toast.error("Failed to save agent config")
+    }
+  }
+
+  async function handleSaveHeartbeat(schedule: string, enabled: boolean) {
+    if (!selectedAgentForProfile) return
+    try {
+      const res = await fetch(`/api/agents/${selectedAgentForProfile}/heartbeat`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ schedule, enabled }),
+      })
+      if (res.ok) {
+        toast.success("Heartbeat config saved")
+        // Refresh agents to pick up new schedule
+        const agentRes = await fetch("/api/agents")
+        if (agentRes.ok) {
+          setAgents(await agentRes.json())
+        }
+      } else {
+        toast.error("Failed to save heartbeat config")
+      }
+    } catch {
+      toast.error("Failed to save heartbeat config")
+    }
+  }
+
+  function handleOpenProfile(agentId: string) {
+    setSelectedAgentForProfile(agentId)
+  }
+
+  // -------------------------------------------------------------------------
   // Export / Import
   // -------------------------------------------------------------------------
 
@@ -515,6 +602,10 @@ export default function DashboardPage() {
     }
   }
 
+  const handleAgentsUpdate = useCallback((updated: Agent[]) => {
+    setAgents(updated)
+  }, [])
+
   const visibleAgents = selectedDepartment
     ? agents.filter((a) => a.departmentId === selectedDepartment)
     : agents
@@ -529,24 +620,26 @@ export default function DashboardPage() {
       onDepartmentChange={setSelectedDepartment}
     >
       {view === "dashboard" && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
-          <div className="lg:col-span-1">
-            <AgentRoster
-              agents={visibleAgents}
-              selectedAgent={selectedAgent}
-              onSelectAgent={(id) => {
-                setSelectedAgent(id)
-                setView("chat")
-              }}
+        <>
+          <DashboardHome
+            agents={visibleAgents}
+            departments={departments}
+            onSelectAgent={handleOpenProfile}
+          />
+
+          {/* Agent profile slide-over */}
+          {selectedAgentForProfile && agents.find((a) => a.id === selectedAgentForProfile) && (
+            <AgentProfile
+              agent={agents.find((a) => a.id === selectedAgentForProfile)!}
+              config={agentConfig}
+              agents={agents}
+              departments={departments}
+              onClose={() => setSelectedAgentForProfile(null)}
+              onSave={handleSaveAgentConfig}
+              onSaveHeartbeat={handleSaveHeartbeat}
             />
-          </div>
-          <div className="lg:col-span-2">
-            <ChatPanel
-              channel={selectedAgent}
-              agentName={agents.find((a) => a.id === selectedAgent)?.name || "Agent"}
-            />
-          </div>
-        </div>
+          )}
+        </>
       )}
 
       {view === "chat" && (
@@ -556,6 +649,7 @@ export default function DashboardPage() {
               agents={visibleAgents}
               selectedAgent={selectedAgent}
               onSelectAgent={setSelectedAgent}
+              onAgentsUpdate={handleAgentsUpdate}
               compact
             />
           </div>
@@ -673,6 +767,7 @@ export default function DashboardPage() {
             {(
               [
                 { key: "general", label: "General" },
+                { key: "decisions", label: "Decisions" },
                 { key: "approvals", label: "Approvals" },
                 { key: "skills", label: "Skills" },
                 { key: "export", label: "Export / Import" },
@@ -713,6 +808,13 @@ export default function DashboardPage() {
                 </select>
               </div>
             </div>
+          )}
+
+          {settingsTab === "decisions" && (
+            <DecisionLog
+              departments={departments}
+              selectedDepartment={selectedDepartment}
+            />
           )}
 
           {settingsTab === "approvals" && (

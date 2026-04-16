@@ -53,7 +53,8 @@ services:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3847/health || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 10
+      start_period: 30s
       start_period: 15s
     networks:
       - orchestra
