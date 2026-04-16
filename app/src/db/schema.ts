@@ -94,6 +94,8 @@ export const agents = pgTable(
     isCeo: boolean("is_ceo").default(false),
     currentTask: text("current_task"),
     lastActive: timestamp("last_active"),
+    heartbeatSchedule: text("heartbeat_schedule"), // cron expression, e.g. '0 * * * *'
+    heartbeatEnabled: boolean("heartbeat_enabled").default(false),
   },
   (t) => [index("agents_department_idx").on(t.departmentId)]
 )
@@ -241,6 +243,10 @@ export const chatMessages = pgTable(
     channel: text("channel").notNull(), // agent id or channel name
     role: text("role").notNull(), // user | assistant
     content: text("content").notNull(),
+    modelId: text("model_id"),
+    runId: text("run_id"),
+    tokensUsed: integer("tokens_used").default(0),
+    metadata: jsonb("metadata").default({}),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => [index("chat_department_channel_idx").on(t.departmentId, t.channel)]
@@ -330,5 +336,84 @@ export const workflowRuns = pgTable(
   (t) => [
     index("workflow_runs_workflow_idx").on(t.workflowId),
     index("workflow_runs_department_idx").on(t.departmentId),
+  ]
+)
+
+// =============================================================================
+// HEARTBEAT -- Autonomous agent execution
+// =============================================================================
+
+export const agentRuntimeState = pgTable("agent_runtime_state", {
+  agentId: text("agent_id")
+    .primaryKey()
+    .references(() => agents.id, { onDelete: "cascade" }),
+  sessionId: text("session_id"),
+  stateJson: jsonb("state_json").default({}),
+  totalInputTokens: integer("total_input_tokens").default(0),
+  totalOutputTokens: integer("total_output_tokens").default(0),
+  totalCostCents: integer("total_cost_cents").default(0),
+  lastRunId: text("last_run_id"),
+  lastRunStatus: text("last_run_status"),
+  lastError: text("last_error"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+export const heartbeatRuns = pgTable(
+  "heartbeat_runs",
+  {
+    id: text("id").primaryKey(),
+    departmentId: text("department_id").references(() => departments.id, {
+      onDelete: "set null",
+    }),
+    agentId: text("agent_id")
+      .notNull()
+      .references(() => agents.id, { onDelete: "cascade" }),
+    wakeupSource: text("wakeup_source").notNull(), // 'cron' | 'webhook' | 'manual' | 'chat' | 'assignment'
+    status: text("status").notNull().default("queued"), // queued | claimed | executing | succeeded | failed | cancelled | timed_out
+    contextSnapshot: jsonb("context_snapshot").default({}),
+    prompt: text("prompt"),
+    modelId: text("model_id"),
+    sessionIdBefore: text("session_id_before"),
+    sessionIdAfter: text("session_id_after"),
+    inputTokens: integer("input_tokens").default(0),
+    outputTokens: integer("output_tokens").default(0),
+    costCents: integer("cost_cents").default(0),
+    error: text("error"),
+    startedAt: timestamp("started_at"),
+    finishedAt: timestamp("finished_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [
+    index("heartbeat_runs_agent_started_idx").on(t.agentId, t.startedAt),
+    index("heartbeat_runs_status_idx").on(t.status),
+  ]
+)
+
+export const agentWakeupRequests = pgTable(
+  "agent_wakeup_requests",
+  {
+    id: text("id").primaryKey(),
+    departmentId: text("department_id").references(() => departments.id, {
+      onDelete: "set null",
+    }),
+    agentId: text("agent_id")
+      .notNull()
+      .references(() => agents.id, { onDelete: "cascade" }),
+    source: text("source").notNull(), // 'cron' | 'webhook' | 'manual' | 'chat' | 'assignment'
+    reason: text("reason"),
+    payload: jsonb("payload").default({}),
+    status: text("status").notNull().default("queued"), // queued | claimed | finished
+    coalescedCount: integer("coalesced_count").default(0),
+    runId: text("run_id").references(() => heartbeatRuns.id, {
+      onDelete: "set null",
+    }),
+    requestedAt: timestamp("requested_at").defaultNow().notNull(),
+    claimedAt: timestamp("claimed_at"),
+    finishedAt: timestamp("finished_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [
+    index("wakeup_requests_agent_status_idx").on(t.agentId, t.status),
   ]
 )

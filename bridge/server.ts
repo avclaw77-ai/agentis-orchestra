@@ -3,10 +3,20 @@ import express from "express"
 import cors from "cors"
 import { SessionManager } from "./session-manager.js"
 import { MODEL_REGISTRY, type Provider } from "./models.js"
+import * as db from "./db.js"
+import { heartbeatEngine } from "./heartbeat.js"
 
 const PORT = parseInt(process.env.PORT || "3847", 10)
 const BRIDGE_TOKEN = process.env.BRIDGE_TOKEN || ""
 const KEEPALIVE_MS = 15_000
+
+// =============================================================================
+// Initialize persistence + heartbeat
+// =============================================================================
+
+db.initDb()
+db.resetAllAgentsIdle()
+heartbeatEngine.start(10_000) // 10-second tick interval
 
 // =============================================================================
 // Express setup (JSON routes)
@@ -39,6 +49,7 @@ app.get("/health", (_req, res) => {
     status: "ok",
     uptime: process.uptime(),
     sessions: sessionManager.activeSessions(),
+    heartbeat: heartbeatEngine.isRunning(),
   })
 })
 
@@ -106,7 +117,43 @@ app.get("/models", (_req, res) => {
   res.json({
     providers: providerStatus,
     models: availableModels,
+    heartbeatStatus: heartbeatEngine.isRunning(),
   })
+})
+
+// =============================================================================
+// Heartbeat API routes
+// =============================================================================
+
+// List heartbeat runs for an agent
+app.get("/agents/:id/runs", async (req, res) => {
+  const runs = await db.getRunsByAgent(req.params.id)
+  res.json({ runs })
+})
+
+// Manual trigger for an agent
+app.post("/agents/:id/trigger", async (req, res) => {
+  const { prompt, departmentId } = req.body
+  if (!prompt) {
+    res.status(400).json({ error: "prompt required" })
+    return
+  }
+  const wakeupId = await heartbeatEngine.triggerManual(
+    req.params.id,
+    prompt,
+    departmentId
+  )
+  res.json({ wakeupId, status: "queued" })
+})
+
+// Get a single run's details
+app.get("/runs/:id", async (req, res) => {
+  const run = await db.getRunById(req.params.id)
+  if (!run) {
+    res.status(404).json({ error: "Run not found" })
+    return
+  }
+  res.json({ run })
 })
 
 // =============================================================================
@@ -172,35 +219,53 @@ const server = http.createServer((req, res) => {
       res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
     }
 
+    // Client disconnect
+    let cancelled = false
+    res.on("close", () => {
+      cancelled = true
+      clearInterval(keepalive)
+      sessionManager.cancel(channel)
+    })
+
     try {
-      await sessionManager.execute({
-        channel,
+      // Route chat through the heartbeat engine
+      await heartbeatEngine.triggerChat(
+        channel,         // agent ID = channel
         message,
-        workspaceId: workspaceId || "default",
-        onToken: (token: string) => send("token", { token }),
-        onToolUse: (tool: string, input: unknown) =>
-          send("tool_use", { tool, input }),
-        onComplete: (result: string) => send("done", { result }),
-        onError: (error: string) => send("error", { error }),
-      })
+        workspaceId || undefined,
+        {
+          onToken: (token: string) => {
+            if (!cancelled) send("token", { token })
+          },
+          onToolUse: (tool: string, input: unknown) => {
+            if (!cancelled) send("tool_use", { tool, input })
+          },
+          onComplete: (result: string) => {
+            if (!cancelled) send("done", { result })
+          },
+          onError: (error: string) => {
+            if (!cancelled) send("error", { error })
+          },
+          onModelSelected: (modelId: string, reason: string) => {
+            if (!cancelled) send("model", { modelId, reason })
+          },
+        }
+      )
     } catch (err) {
-      send("error", {
-        error: err instanceof Error ? err.message : "Unknown error",
-      })
+      if (!cancelled) {
+        send("error", {
+          error: err instanceof Error ? err.message : "Unknown error",
+        })
+      }
     } finally {
       clearInterval(keepalive)
       res.end()
     }
-
-    // Client disconnect
-    res.on("close", () => {
-      clearInterval(keepalive)
-      sessionManager.cancel(channel)
-    })
   })
 })
 
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`[bridge] AgentisOrchestra bridge listening on :${PORT}`)
   console.log(`[bridge] Adapter mode: ${process.env.ADAPTER_MODE || "sdk"}`)
+  console.log(`[bridge] Heartbeat engine: ${heartbeatEngine.isRunning() ? "running" : "stopped"}`)
 })

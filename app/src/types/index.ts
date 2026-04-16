@@ -115,6 +115,8 @@ export interface Agent {
   isCeo: boolean
   currentTask: string | null
   lastActive: string | null
+  heartbeatSchedule: string | null
+  heartbeatEnabled: boolean
 }
 
 export interface AgentConfig {
@@ -240,4 +242,43 @@ export interface SSEDoneEvent {
 
 export interface SSEErrorEvent {
   error: string
+}
+
+// =============================================================================
+// Heartbeat & Runtime
+// =============================================================================
+
+export interface HeartbeatRun {
+  id: string
+  departmentId: string | null
+  agentId: string
+  wakeupSource: "cron" | "webhook" | "manual" | "chat" | "assignment"
+  status: "queued" | "claimed" | "executing" | "succeeded" | "failed" | "cancelled" | "timed_out"
+  contextSnapshot: Record<string, unknown>
+  prompt: string | null
+  modelId: string | null
+  inputTokens: number
+  outputTokens: number
+  costCents: number
+  error: string | null
+  startedAt: string | null
+  finishedAt: string | null
+  createdAt: string
+}
+
+export interface AgentRuntimeState {
+  agentId: string
+  sessionId: string | null
+  totalInputTokens: number
+  totalOutputTokens: number
+  totalCostCents: number
+  lastRunId: string | null
+  lastRunStatus: string | null
+  lastError: string | null
+}
+
+export interface SchedulePreset {
+  label: string
+  cron: string
+  description: string
 }
