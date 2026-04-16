@@ -121,6 +121,8 @@ No YAML. No config files. No CLI flags.
 
 ## Architecture
 
+For CLI mode (Pro subscription), the bridge runs on the host for direct Claude CLI access:
+
 ```
                     HTTPS (443)
                         |

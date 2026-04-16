@@ -2,6 +2,46 @@
 
 All notable changes to AgentisOrchestra are documented here.
 
+## [0.3.0] -- 2026-04-16
+
+### Added
+- **Agent chat working end-to-end** -- CLI execution via host bridge, SSE streaming to browser
+- **Verbose chat** -- shows model selection, thinking, tool use, tool results in real-time
+- **Agent "Run Now" button** -- manually trigger any agent from profile panel
+- **10 connector templates** -- Slack, HubSpot, GitHub, CSV/Excel, PDF, PostgreSQL, MySQL, SMTP, Webhooks (in/out)
+- **Connector library UI** -- browse by category, search, configure with encrypted credentials
+- **Approvals in main nav** -- promoted from Settings sub-tab to top-level Operate view
+- **Chat history persistence** -- loads previous messages on page load
+- **Login page branding** -- Orchestra logo, "Powered by AgentisLab" footer
+
+### Security
+- Fixed `/api/auth/me` returning admin role for unauthenticated users
+- Fixed `/api/company/export` missing auth check
+- Sanitized setup API error messages (no raw DB errors to client)
+- Setup cookie (`ao_setup_done`) set on both login and register
+
+### Fixed
+- Task ID race condition under concurrent creation (count + fallback)
+- Setup wizard back/forward department duplication
+- Duplicate CLI auto-test effect (double API call)
+- Chat panel TypeScript build error (`unknown` type in JSX)
+- CLI-only setup flow (no API key required)
+
+### Token Economics
+- `--max-turns` limit (5 chat, 3 heartbeat) prevents runaway agents
+- Execution timeout (120s chat, 60s heartbeat)
+- Real token usage parsed from CLI output (not estimated)
+- Heartbeats route to Haiku (cheap), chat to Sonnet (quality)
+- `--verbose` only for user-facing chat
+- Design brief: `design/TOKEN_ECONOMICS.md`
+
+### Architecture
+- Bridge runs on host via systemd (not Docker) for CLI access
+- `orchestra` user for non-root bridge execution
+- Host-to-Docker bridge via `host.docker.internal`
+- 82 automated E2E tests passing
+- 10 connector definitions in `app/src/lib/connectors/`
+
 ## [0.2.0] -- 2026-04-16
 
 ### Added
