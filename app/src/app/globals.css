@@ -1,0 +1,112 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* ==========================================================================
+   AGENTIS STUDIO -- DESIGN TOKEN SYSTEM
+   Light mode only. Optimized for daily-use productivity.
+   ========================================================================== */
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-inset: var(--inset);
+
+  --color-status-active: var(--status-active);
+  --color-status-thinking: var(--status-thinking);
+  --color-status-idle: var(--status-idle);
+  --color-status-error: var(--status-error);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+}
+
+/* ==========================================================================
+   LIGHT MODE (default)
+   ========================================================================== */
+
+:root {
+  --background: #f4f7fa;
+  --foreground: #1a1a1a;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
+  --primary: #0284C7;
+  --primary-foreground: #ffffff;
+  --secondary: #e8f0f6;
+  --secondary-foreground: #1a1a1a;
+  --muted: #e8f0f6;
+  --muted-foreground: #5a6b78;
+  --accent: #e8f0f6;
+  --accent-foreground: #1a1a1a;
+  --destructive: #ff3b30;
+  --border: rgba(0, 0, 0, 0.06);
+  --input: rgba(0, 0, 0, 0.06);
+  --ring: #0284C7;
+
+  --surface: #ffffff;
+  --surface-hover: #f6f9fc;
+  --inset: #e8f0f6;
+
+  --status-active: #34c759;
+  --status-thinking: #ffb340;
+  --status-idle: #aeaeb2;
+  --status-error: #ff3b30;
+
+  --radius: 0.75rem;
+}
+
+/* ==========================================================================
+   BASE STYLES
+   ========================================================================== */
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #aeaeb2; border-radius: 3px; }
+
+@keyframes agent-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+@keyframes thinking-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.agent-pulse { animation: agent-pulse 2.5s ease-in-out infinite; }
+.thinking-pulse { animation: thinking-pulse 1.5s ease-in-out infinite; }

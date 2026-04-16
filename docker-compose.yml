@@ -1,0 +1,125 @@
+# =============================================================================
+# AgentisOrchestra -- Docker Compose
+# Run: docker compose up
+# =============================================================================
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-agentis_orchestra}
+      POSTGRES_USER: ${DB_USER:-agentis}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-agentis_local}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-agentis}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - orchestra
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  bridge:
+    build:
+      context: ./bridge
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT: 3847
+      DATABASE_URL: postgres://${DB_USER:-agentis}:${DB_PASSWORD:-agentis_local}@db:5432/${DB_NAME:-agentis_orchestra}
+      BRIDGE_TOKEN: ${BRIDGE_TOKEN}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      CLAUDE_CLI_PATH: ${CLAUDE_CLI_PATH:-/usr/local/bin/claude}
+      ADAPTER_MODE: ${ADAPTER_MODE:-sdk}
+    ports:
+      - "${BRIDGE_PORT:-3847}:3847"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - bridge_uploads:/tmp/studio-uploads
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3847/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - orchestra
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-agentis}:${DB_PASSWORD:-agentis_local}@db:5432/${DB_NAME:-agentis_orchestra}
+      BRIDGE_URL: http://bridge:3847
+      BRIDGE_TOKEN: ${BRIDGE_TOKEN}
+      AUTH_TOKEN: ${AUTH_TOKEN}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-change-me-in-production}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      bridge:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - orchestra
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  # Optional: DB admin UI -- start with: docker compose --profile tools up
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: unless-stopped
+    profiles:
+      - tools
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@agentislab.ai}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - orchestra
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+networks:
+  orchestra:
+    driver: bridge
+
+volumes:
+  pgdata:
+    name: orchestra_pgdata
+  bridge_uploads:
+    name: orchestra_bridge_uploads
+  pgadmin_data:
+    name: orchestra_pgadmin_data

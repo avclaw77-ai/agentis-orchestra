@@ -1,0 +1,1607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgentisOrchestra -- Setup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f4f7fa;
+    --card: #ffffff;
+    --primary: #0284C7;
+    --primary-hover: #0369A1;
+    --primary-light: #e0f2fe;
+    --primary-lighter: #f0f9ff;
+    --text: #1a1a1a;
+    --text-secondary: #64748b;
+    --text-tertiary: #94a3b8;
+    --border: #e2e8f0;
+    --border-light: #f1f5f9;
+    --success: #10b981;
+    --success-bg: #ecfdf5;
+    --error: #ef4444;
+    --error-bg: #fef2f2;
+    --warning: #f59e0b;
+    --radius: 0.75rem;
+    --shadow: 0 4px 16px rgba(0,0,0,0.06);
+    --shadow-sm: 0 1px 4px rgba(0,0,0,0.04);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
+    --font: 'Manrope', -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 40px 20px 60px;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+
+  /* ── Progress bar ── */
+  .progress-container {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 36px;
+    padding: 0 20px;
+  }
+
+  .progress-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--card);
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    transition: all var(--transition);
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .progress-dot.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.15);
+  }
+
+  .progress-dot.completed {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+  }
+
+  .progress-dot.completed::after {
+    content: '';
+    display: block;
+    width: 10px;
+    height: 6px;
+    border-left: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    transform: rotate(-45deg) translateY(-1px);
+  }
+
+  .progress-dot.completed span { display: none; }
+
+  .progress-line {
+    width: 40px;
+    height: 2px;
+    background: var(--border);
+    transition: background var(--transition);
+    flex-shrink: 0;
+  }
+
+  .progress-line.completed {
+    background: var(--primary);
+  }
+
+  /* ── Card ── */
+  .wizard-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    max-width: 640px;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    min-height: 420px;
+  }
+
+  .step {
+    display: none;
+    padding: 48px 44px 40px;
+    animation: fadeIn 0.35s ease;
+  }
+
+  .step.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .step-header {
+    margin-bottom: 32px;
+  }
+
+  .step-header h2 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+
+  .step-header p {
+    font-size: 15px;
+    color: var(--text-secondary);
+    font-weight: 400;
+    line-height: 1.6;
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 24px;
+    border-radius: 8px;
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    line-height: 1;
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(2,132,199,0.25); }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1.5px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--text-secondary); color: var(--text); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    padding: 11px 16px;
+  }
+  .btn-ghost:hover { color: var(--text); background: var(--border-light); }
+
+  .btn-sm {
+    padding: 7px 14px;
+    font-size: 13px;
+  }
+
+  .btn-launch {
+    background: var(--primary);
+    color: #fff;
+    padding: 14px 36px;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 10px;
+  }
+  .btn-launch:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(2,132,199,0.3); }
+
+  .actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 36px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-light);
+  }
+
+  /* ── Inputs ── */
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+    letter-spacing: 0.01em;
+  }
+
+  .form-group input, .form-group textarea, .form-group select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: var(--font);
+    font-size: 14px;
+    color: var(--text);
+    background: var(--card);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    outline: none;
+  }
+
+  .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
+  }
+
+  .form-group input::placeholder, .form-group textarea::placeholder {
+    color: var(--text-tertiary);
+  }
+
+  .form-group textarea {
+    resize: vertical;
+    min-height: 60px;
+  }
+
+  /* ── Language toggle ── */
+  .lang-toggle {
+    display: inline-flex;
+    background: var(--border-light);
+    border-radius: 8px;
+    padding: 3px;
+    margin-bottom: 32px;
+  }
+
+  .lang-btn {
+    padding: 8px 20px;
+    border: none;
+    background: transparent;
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .lang-btn.active {
+    background: var(--card);
+    color: var(--text);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* ── Provider cards ── */
+  .provider-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    transition: border-color 0.2s ease;
+  }
+
+  .provider-card:hover { border-color: #cbd5e1; }
+
+  .provider-card.connected { border-color: var(--success); background: var(--success-bg); }
+  .provider-card.error { border-color: var(--error); background: var(--error-bg); }
+
+  .provider-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  .provider-info { flex: 1; min-width: 0; }
+
+  .provider-name {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .provider-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+  }
+
+  .provider-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+
+  .status-detected { background: var(--success-bg); color: var(--success); }
+  .status-detected .status-dot { background: var(--success); }
+  .status-not-configured { background: var(--border-light); color: var(--text-tertiary); }
+  .status-not-configured .status-dot { background: var(--text-tertiary); }
+  .status-connected { background: var(--success-bg); color: var(--success); }
+  .status-connected .status-dot { background: var(--success); }
+  .status-error { background: var(--error-bg); color: var(--error); }
+  .status-error .status-dot { background: var(--error); }
+
+  .provider-key-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .provider-key-row input {
+    flex: 1;
+    padding: 7px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .provider-key-row input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
+  }
+
+  .btn-test {
+    padding: 7px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    background: var(--card);
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-test:hover { border-color: var(--primary); color: var(--primary); }
+  .btn-test.success { border-color: var(--success); color: var(--success); background: var(--success-bg); }
+  .btn-test.error { border-color: var(--error); color: var(--error); background: var(--error-bg); }
+
+  /* ── Department templates ── */
+  .templates-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .template-card {
+    padding: 14px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+
+  .template-card:hover { border-color: #cbd5e1; transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+  .template-card.selected { border-color: var(--primary); background: var(--primary-lighter); box-shadow: 0 0 0 3px rgba(2,132,199,0.1); }
+
+  .template-swatch {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    margin: 0 auto 8px;
+  }
+
+  .template-name {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .template-agents {
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+
+  .divider-or {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 20px 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .divider-or::before, .divider-or::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── Color picker row ── */
+  .color-picker-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .color-option {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .color-option:hover { transform: scale(1.15); }
+  .color-option.selected { border-color: var(--text); box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--text); }
+
+  /* ── Agent list ── */
+  .agent-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .agent-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--border-light);
+    border-radius: 8px;
+    animation: fadeIn 0.25s ease;
+  }
+
+  .agent-row .agent-color-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .agent-row-name {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 600;
+    min-width: 0;
+  }
+
+  .agent-row-role {
+    font-size: 12px;
+    color: var(--text-secondary);
+    flex: 1;
+    min-width: 0;
+  }
+
+  .agent-row select {
+    padding: 5px 8px;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    font-family: var(--font);
+    font-size: 12px;
+    background: var(--card);
+    color: var(--text);
+    outline: none;
+    max-width: 160px;
+  }
+
+  .agent-row .btn-remove {
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 4px;
+    font-size: 16px;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+
+  .agent-row .btn-remove:hover { color: var(--error); }
+
+  /* ── Add agent row ── */
+  .add-agent-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .add-agent-row input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1.5px dashed var(--border);
+    border-radius: 8px;
+    font-family: var(--font);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .add-agent-row input:focus { border-color: var(--primary); border-style: solid; }
+
+  /* ── Summary ── */
+  .summary-section {
+    padding: 16px;
+    background: var(--border-light);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+  }
+
+  .summary-section h4 {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-tertiary);
+    margin-bottom: 10px;
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 14px;
+  }
+
+  .summary-row .label { color: var(--text-secondary); }
+  .summary-row .value { font-weight: 600; }
+
+  .summary-dept {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+  }
+
+  .summary-dept-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .summary-dept-name {
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .summary-dept-agents {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-left: auto;
+  }
+
+  .summary-agent-list {
+    padding-left: 20px;
+    margin-bottom: 4px;
+  }
+
+  .summary-agent-item {
+    font-size: 13px;
+    color: var(--text-secondary);
+    padding: 2px 0;
+  }
+
+  .summary-provider-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-right: 6px;
+    margin-bottom: 6px;
+  }
+
+  /* ── Brand ── */
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .brand-logo {
+    width: 44px;
+    height: 44px;
+    background: var(--primary);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .brand-logo svg { width: 26px; height: 26px; }
+
+  .brand-name {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--text);
+  }
+
+  .brand-name span { color: var(--primary); }
+
+  .hero-tagline {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+    margin: 24px 0 8px;
+    color: var(--text);
+  }
+
+  .hero-sub {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 32px;
+  }
+
+  .step-counter {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+
+  /* ── Departments list on step 6 ── */
+  .dept-summary-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--border-light);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+  }
+
+  .dept-summary-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 5px;
+    flex-shrink: 0;
+  }
+
+  .dept-summary-info { flex: 1; }
+
+  .dept-summary-name {
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .dept-summary-count {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .ready-confetti {
+    text-align: center;
+    padding: 8px 0 4px;
+  }
+
+  .ready-icon {
+    width: 64px;
+    height: 64px;
+    background: var(--success-bg);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+
+  .ready-icon svg { width: 32px; height: 32px; color: var(--success); }
+
+  /* ── Responsive ── */
+  @media (max-width: 680px) {
+    body { padding: 24px 12px 48px; }
+    .step { padding: 32px 24px 28px; }
+    .templates-grid { grid-template-columns: 1fr 1fr; }
+    .hero-tagline { font-size: 22px; }
+    .progress-line { width: 20px; }
+    .progress-dot { width: 28px; height: 28px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Progress -->
+<div class="progress-container" id="progress">
+  <div class="progress-dot active" data-step="1"><span>1</span></div>
+  <div class="progress-line" data-after="1"></div>
+  <div class="progress-dot" data-step="2"><span>2</span></div>
+  <div class="progress-line" data-after="2"></div>
+  <div class="progress-dot" data-step="3"><span>3</span></div>
+  <div class="progress-line" data-after="3"></div>
+  <div class="progress-dot" data-step="4"><span>4</span></div>
+  <div class="progress-line" data-after="4"></div>
+  <div class="progress-dot" data-step="5"><span>5</span></div>
+  <div class="progress-line" data-after="5"></div>
+  <div class="progress-dot" data-step="6"><span>6</span></div>
+  <div class="progress-line" data-after="6"></div>
+  <div class="progress-dot" data-step="7"><span>7</span></div>
+</div>
+
+<div class="wizard-card">
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- STEP 1: Welcome + Language                                     -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="step active" data-step="1">
+    <div class="brand">
+      <div class="brand-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+        </svg>
+      </div>
+      <div class="brand-name">Agentis<span>Orchestra</span></div>
+    </div>
+
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('en')">English</button>
+      <button class="lang-btn" onclick="setLang('fr')">Francais</button>
+    </div>
+
+    <h1 class="hero-tagline" id="hero-tagline">Your multi-agent team starts here.</h1>
+    <p class="hero-sub" id="hero-sub">
+      AgentisOrchestra orchestrates AI agents across departments, models, and workflows.
+      This setup takes about 3 minutes.
+    </p>
+
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--border-light); border-radius: 8px; font-size: 13px; color: var(--text-secondary);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        <span id="feat-multi">Multi-model routing</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--border-light); border-radius: 8px; font-size: 13px; color: var(--text-secondary);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span id="feat-dept">Department-based teams</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--border-light); border-radius: 8px; font-size: 13px; color: var(--text-secondary);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        <span id="feat-work">Workflow automation</span>
+      </div>
+    </div>
+
+    <div class="actions" style="border-top: none; margin-top: 32px; padding-top: 0;">
+      <span></span>
+      <button class="btn btn-primary" onclick="goToStep(2)" id="btn-start">
+        Get Started
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- STEP 2: Company Setup                                          -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="step" data-step="2">
+    <div class="step-header">
+      <p class="step-counter" id="s2-counter">Step 2 of 7</p>
+      <h2 id="s2-title">About your organization</h2>
+      <p id="s2-desc">This helps agents understand context and align with your goals.</p>
+    </div>
+
+    <div class="form-group">
+      <label id="s2-label-name">Company or team name</label>
+      <input type="text" id="companyName" placeholder="e.g. Acme Corp" value="">
+    </div>
+
+    <div class="form-group">
+      <label id="s2-label-mission">Mission in one sentence</label>
+      <textarea id="companyMission" rows="2" placeholder="e.g. We help small businesses automate operations with AI."></textarea>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="goToStep(1)" id="s2-back">Back</button>
+      <button class="btn btn-primary" onclick="goToStep(3)" id="s2-next">
+        Continue
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- STEP 3: Connect AI Providers                                   -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="step" data-step="3">
+    <div class="step-header">
+      <p class="step-counter" id="s3-counter">Step 3 of 7</p>
+      <h2 id="s3-title">Connect AI providers</h2>
+      <p id="s3-desc">At least one provider is needed. Claude CLI is free with a Pro subscription.</p>
+    </div>
+
+    <!-- Claude CLI -->
+    <div class="provider-card" id="provider-cli">
+      <div class="provider-icon" style="background: #d97706; color: #fff;">C</div>
+      <div class="provider-info">
+        <div class="provider-name">Claude Code CLI</div>
+        <div class="provider-desc">Pro subscription -- flat monthly cost, unlimited tokens</div>
+        <div class="provider-status status-detected" id="cli-status">
+          <span class="status-dot"></span>
+          <span id="cli-status-text">Detected on system</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- OpenRouter -->
+    <div class="provider-card" id="provider-openrouter">
+      <div class="provider-icon" style="background: #6366f1; color: #fff;">OR</div>
+      <div class="provider-info">
+        <div class="provider-name">OpenRouter</div>
+        <div class="provider-desc">100+ models via single API -- best-model routing</div>
+        <div class="provider-status status-not-configured" id="or-status">
+          <span class="status-dot"></span>
+          <span id="or-status-text">Not configured</span>
+        </div>
+        <div class="provider-key-row">
+          <input type="password" id="or-key" placeholder="sk-or-..." spellcheck="false">
+          <button class="btn-test" onclick="testProvider('openrouter')">Test</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Perplexity -->
+    <div class="provider-card" id="provider-perplexity">
+      <div class="provider-icon" style="background: #10b981; color: #fff;">Px</div>
+      <div class="provider-info">
+        <div class="provider-name">Perplexity</div>
+        <div class="provider-desc">Research and web search with citations</div>
+        <div class="provider-status status-not-configured" id="px-status">
+          <span class="status-dot"></span>
+          <span id="px-status-text">Not configured</span>
+        </div>
+        <div class="provider-key-row">
+          <input type="password" id="px-key" placeholder="pplx-..." spellcheck="false">
+          <button class="btn-test" onclick="testProvider('perplexity')">Test</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- OpenAI -->
+    <div class="provider-card" id="provider-openai">
+      <div class="provider-icon" style="background: #1a1a1a; color: #fff;">AI</div>
+      <div class="provider-info">
+        <div class="provider-name">OpenAI</div>
+        <div class="provider-desc">GPT-4o, GPT-4o-mini, o1 models</div>
+        <div class="provider-status status-not-configured" id="oa-status">
+          <span class="status-dot"></span>
+          <span id="oa-status-text">Not configured</span>
+        </div>
+        <div class="provider-key-row">
+          <input type="password" id="oa-key" placeholder="sk-..." spellcheck="false">
+          <button class="btn-test" onclick="testProvider('openai')">Test</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="goToStep(2)" id="s3-back">Back</button>
+      <button class="btn btn-primary" onclick="goToStep(4)" id="s3-next">
+        Continue
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- STEP 4: First Department                                       -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="step" data-step="4">
+    <div class="step-header">
+      <p class="step-counter" id="s4-counter">Step 4 of 7</p>
+      <h2 id="s4-title">Create your first department</h2>
+      <p id="s4-desc">Departments group agents by function. Pick a template or define your own.</p>
+    </div>
+
+    <div class="templates-grid">
+      <div class="template-card" onclick="selectTemplate(this, 'engineering')" data-tpl="engineering">
+        <div class="template-swatch" style="background: #3b82f6;"></div>
+        <div class="template-name" data-i18n="tpl-eng">Engineering</div>
+        <div class="template-agents">4 agents</div>
+      </div>
+      <div class="template-card" onclick="selectTemplate(this, 'research')" data-tpl="research">
+        <div class="template-swatch" style="background: #f59e0b;"></div>
+        <div class="template-name" data-i18n="tpl-res">Research</div>
+        <div class="template-agents">3 agents</div>
+      </div>
+      <div class="template-card" onclick="selectTemplate(this, 'design')" data-tpl="design">
+        <div class="template-swatch" style="background: #8b5cf6;"></div>
+        <div class="template-name" data-i18n="tpl-des">Design</div>
+        <div class="template-agents">3 agents</div>
+      </div>
+      <div class="template-card" onclick="selectTemplate(this, 'operations')" data-tpl="operations">
+        <div class="template-swatch" style="background: #6366f1;"></div>
+        <div class="template-name" data-i18n="tpl-ops">Operations</div>
+        <div class="template-agents">3 agents</div>
+      </div>
+      <div class="template-card" onclick="selectTemplate(this, 'sales')" data-tpl="sales">
+        <div class="template-swatch" style="background: #ec4899;"></div>
+        <div class="template-name" data-i18n="tpl-sal">Sales</div>
+        <div class="template-agents">3 agents</div>
+      </div>
+      <div class="template-card" onclick="selectTemplate(this, 'support')" data-tpl="support">
+        <div class="template-swatch" style="background: #10b981;"></div>
+        <div class="template-name" data-i18n="tpl-sup">Support</div>
+        <div class="template-agents">3 agents</div>
+      </div>
+    </div>
+
+    <div class="divider-or" id="s4-or">or create custom</div>
+
+    <div class="form-group">
+      <label id="s4-label-name">Department name</label>
+      <input type="text" id="deptName" placeholder="e.g. Product">
+    </div>
+
+    <div class="form-group">
+      <label id="s4-label-desc">Description</label>
+      <input type="text" id="deptDesc" placeholder="What does this department do?">
+    </div>
+
+    <div class="form-group">
+      <label id="s4-label-color">Color</label>
+      <div class="color-picker-row" id="colorPicker">
+        <div class="color-option selected" style="background: #3b82f6;" data-color="#3b82f6" onclick="pickColor(this)"></div>
+        <div class="color-option" style="background: #8b5cf6;" data-color="#8b5cf6" onclick="pickColor(this)"></div>
+        <div class="color-option" style="background: #ec4899;" data-color="#ec4899" onclick="pickColor(this)"></div>
+        <div class="color-option" style="background: #f59e0b;" data-color="#f59e0b" onclick="pickColor(this)"></div>
+        <div class="color-option" style="background: #10b981;" data-color="#10b981" onclick="pickColor(this)"></div>
+        <div class="color-option" style="background: #6366f1;" data-color="#6366f1" onclick="pickColor(this)"></div>
+        <div class="color-option" style="background: #0284C7;" data-color="#0284C7" onclick="pickColor(this)"></div>
+        <div class="color-option" style="background: #d97706;" data-color="#d97706" onclick="pickColor(this)"></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="goToStep(3)" id="s4-back">Back</button>
+      <button class="btn btn-primary" onclick="goToStep(5)" id="s4-next">
+        Continue
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- STEP 5: Add Agents                                             -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="step" data-step="5">
+    <div class="step-header">
+      <p class="step-counter" id="s5-counter">Step 5 of 7</p>
+      <h2 id="s5-title">Add agents to <span id="s5-dept-name">Engineering</span></h2>
+      <p id="s5-desc">Each agent has a role and a preferred model. You can always change these later.</p>
+    </div>
+
+    <div class="agent-list" id="agentList">
+      <!-- Populated by JS -->
+    </div>
+
+    <div class="add-agent-row">
+      <input type="text" id="newAgentName" placeholder="Agent name..." onkeydown="if(event.key==='Enter')addAgent()">
+      <button class="btn btn-secondary btn-sm" onclick="addAgent()" id="s5-add">+ Add</button>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="goToStep(4)" id="s5-back">Back</button>
+      <button class="btn btn-primary" onclick="goToStep(6)" id="s5-next">
+        Continue
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- STEP 6: More Departments?                                      -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="step" data-step="6">
+    <div class="step-header">
+      <p class="step-counter" id="s6-counter">Step 6 of 7</p>
+      <h2 id="s6-title">Add more departments?</h2>
+      <p id="s6-desc">You can always add departments later from the dashboard.</p>
+    </div>
+
+    <div id="deptSummaryList">
+      <!-- Populated by JS -->
+    </div>
+
+    <div style="margin-top: 16px; display: flex; gap: 10px;">
+      <button class="btn btn-secondary" onclick="addAnotherDept()" id="s6-add">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        Add another department
+      </button>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="goToStep(5)" id="s6-back">Back</button>
+      <button class="btn btn-primary" onclick="goToStep(7)" id="s6-next">
+        Finish setup
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- STEP 7: Ready                                                  -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="step" data-step="7">
+    <div class="ready-confetti">
+      <div class="ready-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 6L9 17l-5-5"/>
+        </svg>
+      </div>
+      <h2 style="font-size: 24px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 4px;" id="s7-title">You're all set.</h2>
+      <p style="font-size: 15px; color: var(--text-secondary); margin-bottom: 28px;" id="s7-desc">Your workspace is configured and ready to go.</p>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary-section">
+      <h4 id="s7-org">Organization</h4>
+      <div class="summary-row">
+        <span class="label" id="s7-label-name">Name</span>
+        <span class="value" id="summaryCompanyName">--</span>
+      </div>
+      <div class="summary-row">
+        <span class="label" id="s7-label-lang">Language</span>
+        <span class="value" id="summaryLang">English</span>
+      </div>
+    </div>
+
+    <div class="summary-section">
+      <h4 id="s7-providers">Providers</h4>
+      <div id="summaryProviders"></div>
+    </div>
+
+    <div class="summary-section">
+      <h4 id="s7-teams">Teams</h4>
+      <div id="summaryTeams"></div>
+    </div>
+
+    <div style="text-align: center; margin-top: 28px;">
+      <button class="btn btn-launch" onclick="launchDashboard()" id="s7-launch">
+        Launch Dashboard
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═════════════════════════════════════════════════════════════════════
+// State
+// ═════════════════════════════════════════════════════════════════════
+let currentStep = 1;
+let lang = 'en';
+let selectedColor = '#3b82f6';
+let selectedTemplate = null;
+
+const departments = [];
+let currentDeptAgents = [];
+
+const TEMPLATES = {
+  engineering: {
+    name: { en: 'Engineering', fr: 'Ingenierie' },
+    desc: { en: 'Software development, code quality, and DevOps', fr: 'Developpement logiciel, qualite du code et DevOps' },
+    color: '#3b82f6',
+    agents: [
+      { name: 'Lead Dev', role: { en: 'Tech lead', fr: 'Responsable technique' } },
+      { name: 'Backend', role: { en: 'API & data layer', fr: 'API et couche donnees' } },
+      { name: 'Frontend', role: { en: 'UI implementation', fr: 'Implementation UI' } },
+      { name: 'QA', role: { en: 'Testing & review', fr: 'Tests et revue' } },
+    ]
+  },
+  research: {
+    name: { en: 'Research', fr: 'Recherche' },
+    desc: { en: 'Exploration, prototyping, and intelligence gathering', fr: 'Exploration, prototypage et veille' },
+    color: '#f59e0b',
+    agents: [
+      { name: 'Analyst', role: { en: 'Data analysis & trends', fr: 'Analyse de donnees et tendances' } },
+      { name: 'Explorer', role: { en: 'Technology scouting', fr: 'Veille technologique' } },
+      { name: 'Prototyper', role: { en: 'Rapid proof of concepts', fr: 'Preuves de concept rapides' } },
+    ]
+  },
+  design: {
+    name: { en: 'Design', fr: 'Design' },
+    desc: { en: 'Visual design, UX, and design systems', fr: 'Design visuel, UX et systemes de design' },
+    color: '#8b5cf6',
+    agents: [
+      { name: 'UX Lead', role: { en: 'User experience strategy', fr: 'Strategie experience utilisateur' } },
+      { name: 'Visual', role: { en: 'UI design & polish', fr: 'Design UI et finitions' } },
+      { name: 'Content', role: { en: 'Copy & content design', fr: 'Redaction et design de contenu' } },
+    ]
+  },
+  operations: {
+    name: { en: 'Operations', fr: 'Operations' },
+    desc: { en: 'Infrastructure, CI/CD, and security', fr: 'Infrastructure, CI/CD et securite' },
+    color: '#6366f1',
+    agents: [
+      { name: 'DevOps', role: { en: 'Pipelines & deployments', fr: 'Pipelines et deploiements' } },
+      { name: 'Security', role: { en: 'Audits & compliance', fr: 'Audits et conformite' } },
+      { name: 'Monitor', role: { en: 'Uptime & observability', fr: 'Disponibilite et observabilite' } },
+    ]
+  },
+  sales: {
+    name: { en: 'Sales', fr: 'Ventes' },
+    desc: { en: 'Prospecting, outreach, and pipeline management', fr: 'Prospection, approche et gestion du pipeline' },
+    color: '#ec4899',
+    agents: [
+      { name: 'Prospector', role: { en: 'Lead generation', fr: 'Generation de leads' } },
+      { name: 'Closer', role: { en: 'Deal management', fr: 'Gestion des offres' } },
+      { name: 'Researcher', role: { en: 'Market intelligence', fr: 'Intelligence de marche' } },
+    ]
+  },
+  support: {
+    name: { en: 'Support', fr: 'Support' },
+    desc: { en: 'Customer success and issue resolution', fr: 'Succes client et resolution de problemes' },
+    color: '#10b981',
+    agents: [
+      { name: 'Triage', role: { en: 'Issue classification', fr: 'Classification des problemes' } },
+      { name: 'Resolver', role: { en: 'Technical support', fr: 'Support technique' } },
+      { name: 'Success', role: { en: 'Customer onboarding', fr: 'Accompagnement client' } },
+    ]
+  },
+};
+
+const MODELS = [
+  { value: 'claude-sonnet', label: 'Claude Sonnet (CLI)' },
+  { value: 'claude-opus', label: 'Claude Opus (CLI)' },
+  { value: 'claude-haiku', label: 'Claude Haiku (CLI)' },
+  { value: 'gpt-4o', label: 'GPT-4o (OpenAI)' },
+  { value: 'gpt-4o-mini', label: 'GPT-4o mini (OpenAI)' },
+  { value: 'sonar-pro', label: 'Sonar Pro (Perplexity)' },
+  { value: 'auto', label: 'Auto (best for task)' },
+];
+
+// ═════════════════════════════════════════════════════════════════════
+// i18n
+// ═════════════════════════════════════════════════════════════════════
+const i18n = {
+  en: {
+    'hero-tagline': 'Your multi-agent team starts here.',
+    'hero-sub': 'AgentisOrchestra orchestrates AI agents across departments, models, and workflows. This setup takes about 3 minutes.',
+    'btn-start': 'Get Started',
+    'feat-multi': 'Multi-model routing',
+    'feat-dept': 'Department-based teams',
+    'feat-work': 'Workflow automation',
+    's2-counter': 'Step 2 of 7', 's2-title': 'About your organization',
+    's2-desc': 'This helps agents understand context and align with your goals.',
+    's2-label-name': 'Company or team name', 's2-label-mission': 'Mission in one sentence',
+    's2-back': 'Back', 's2-next': 'Continue',
+    's3-counter': 'Step 3 of 7', 's3-title': 'Connect AI providers',
+    's3-desc': 'At least one provider is needed. Claude CLI is free with a Pro subscription.',
+    's3-back': 'Back', 's3-next': 'Continue',
+    'cli-status-text': 'Detected on system',
+    'or-status-text': 'Not configured', 'px-status-text': 'Not configured', 'oa-status-text': 'Not configured',
+    's4-counter': 'Step 4 of 7', 's4-title': 'Create your first department',
+    's4-desc': 'Departments group agents by function. Pick a template or define your own.',
+    's4-label-name': 'Department name', 's4-label-desc': 'Description', 's4-label-color': 'Color',
+    's4-or': 'or create custom', 's4-back': 'Back', 's4-next': 'Continue',
+    'tpl-eng': 'Engineering', 'tpl-res': 'Research', 'tpl-des': 'Design',
+    'tpl-ops': 'Operations', 'tpl-sal': 'Sales', 'tpl-sup': 'Support',
+    's5-counter': 'Step 5 of 7', 's5-title-prefix': 'Add agents to ',
+    's5-desc': 'Each agent has a role and a preferred model. You can always change these later.',
+    's5-add': '+ Add', 's5-back': 'Back', 's5-next': 'Continue',
+    's6-counter': 'Step 6 of 7', 's6-title': 'Add more departments?',
+    's6-desc': 'You can always add departments later from the dashboard.',
+    's6-add': 'Add another department', 's6-back': 'Back', 's6-next': 'Finish setup',
+    's7-title': "You're all set.", 's7-desc': 'Your workspace is configured and ready to go.',
+    's7-org': 'Organization', 's7-label-name': 'Name', 's7-label-lang': 'Language',
+    's7-providers': 'Providers', 's7-teams': 'Teams', 's7-launch': 'Launch Dashboard',
+    'lang-display': 'English',
+  },
+  fr: {
+    'hero-tagline': 'Votre equipe multi-agents commence ici.',
+    'hero-sub': "AgentisOrchestra orchestre des agents IA a travers departements, modeles et flux de travail. La configuration prend environ 3 minutes.",
+    'btn-start': 'Commencer',
+    'feat-multi': 'Routage multi-modeles',
+    'feat-dept': 'Equipes par departement',
+    'feat-work': 'Automatisation des flux',
+    's2-counter': 'Etape 2 de 7', 's2-title': 'A propos de votre organisation',
+    's2-desc': 'Aide les agents a comprendre le contexte et vos objectifs.',
+    's2-label-name': "Nom de l'entreprise ou de l'equipe", 's2-label-mission': 'Mission en une phrase',
+    's2-back': 'Retour', 's2-next': 'Continuer',
+    's3-counter': 'Etape 3 de 7', 's3-title': 'Connecter les fournisseurs IA',
+    's3-desc': "Au moins un fournisseur est requis. Claude CLI est inclus avec l'abonnement Pro.",
+    's3-back': 'Retour', 's3-next': 'Continuer',
+    'cli-status-text': 'Detecte sur le systeme',
+    'or-status-text': 'Non configure', 'px-status-text': 'Non configure', 'oa-status-text': 'Non configure',
+    's4-counter': 'Etape 4 de 7', 's4-title': 'Creez votre premier departement',
+    's4-desc': 'Les departements regroupent les agents par fonction. Choisissez un modele ou creez le votre.',
+    's4-label-name': 'Nom du departement', 's4-label-desc': 'Description', 's4-label-color': 'Couleur',
+    's4-or': 'ou creer sur mesure', 's4-back': 'Retour', 's4-next': 'Continuer',
+    'tpl-eng': 'Ingenierie', 'tpl-res': 'Recherche', 'tpl-des': 'Design',
+    'tpl-ops': 'Operations', 'tpl-sal': 'Ventes', 'tpl-sup': 'Support',
+    's5-counter': 'Etape 5 de 7', 's5-title-prefix': 'Ajouter des agents a ',
+    's5-desc': 'Chaque agent a un role et un modele prefere. Vous pourrez modifier tout ca plus tard.',
+    's5-add': '+ Ajouter', 's5-back': 'Retour', 's5-next': 'Continuer',
+    's6-counter': 'Etape 6 de 7', 's6-title': 'Ajouter d\'autres departements?',
+    's6-desc': 'Vous pouvez toujours en ajouter plus tard depuis le tableau de bord.',
+    's6-add': 'Ajouter un departement', 's6-back': 'Retour', 's6-next': 'Terminer la configuration',
+    's7-title': 'Tout est pret.', 's7-desc': 'Votre espace de travail est configure.',
+    's7-org': 'Organisation', 's7-label-name': 'Nom', 's7-label-lang': 'Langue',
+    's7-providers': 'Fournisseurs', 's7-teams': 'Equipes', 's7-launch': 'Lancer le tableau de bord',
+    'lang-display': 'Francais',
+  }
+};
+
+function setLang(l) {
+  lang = l;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.lang-btn:nth-child(${l === 'en' ? 1 : 2})`).classList.add('active');
+  applyTranslations();
+}
+
+function applyTranslations() {
+  const t = i18n[lang];
+  for (const [key, val] of Object.entries(t)) {
+    const el = document.getElementById(key);
+    if (el) {
+      if (el.tagName === 'BUTTON' || el.tagName === 'A') {
+        // preserve inner SVG
+        const svg = el.querySelector('svg');
+        el.textContent = val + ' ';
+        if (svg) el.appendChild(svg);
+      } else {
+        el.textContent = val;
+      }
+    }
+    // data-i18n attributes
+    document.querySelectorAll(`[data-i18n="${key}"]`).forEach(el => {
+      el.textContent = val;
+    });
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════
+// Navigation
+// ═════════════════════════════════════════════════════════════════════
+function goToStep(step) {
+  // Save current dept when leaving step 5
+  if (currentStep === 5 && step !== 5) {
+    saveDeptFromUI();
+  }
+
+  // Build summary on step 6
+  if (step === 6) {
+    renderDeptSummary();
+  }
+
+  // Build final summary on step 7
+  if (step === 7) {
+    renderFinalSummary();
+  }
+
+  // Update step 5 title
+  if (step === 5) {
+    const deptName = document.getElementById('deptName').value || (selectedTemplate ? TEMPLATES[selectedTemplate].name[lang] : 'Department');
+    document.getElementById('s5-dept-name').textContent = deptName;
+
+    // If coming from step 4 and we don't have agents yet, populate from template
+    if (currentStep === 4) {
+      if (selectedTemplate && currentDeptAgents.length === 0) {
+        const tpl = TEMPLATES[selectedTemplate];
+        currentDeptAgents = tpl.agents.map(a => ({
+          name: a.name,
+          role: a.role[lang],
+          model: 'claude-sonnet'
+        }));
+      } else if (currentDeptAgents.length === 0) {
+        currentDeptAgents = [{ name: 'Agent 1', role: 'General', model: 'claude-sonnet' }];
+      }
+    }
+    renderAgents();
+  }
+
+  currentStep = step;
+
+  // Update step visibility
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.querySelector(`.step[data-step="${step}"]`).classList.add('active');
+
+  // Update progress dots
+  document.querySelectorAll('.progress-dot').forEach(dot => {
+    const s = parseInt(dot.dataset.step);
+    dot.classList.remove('active', 'completed');
+    if (s === step) dot.classList.add('active');
+    else if (s < step) dot.classList.add('completed');
+  });
+
+  document.querySelectorAll('.progress-line').forEach(line => {
+    const after = parseInt(line.dataset.after);
+    line.classList.toggle('completed', after < step);
+  });
+}
+
+// ═════════════════════════════════════════════════════════════════════
+// Provider testing
+// ═════════════════════════════════════════════════════════════════════
+function testProvider(provider) {
+  const map = {
+    openrouter: { keyId: 'or-key', statusId: 'or-status', textId: 'or-status-text', cardId: 'provider-openrouter' },
+    perplexity: { keyId: 'px-key', statusId: 'px-status', textId: 'px-status-text', cardId: 'provider-perplexity' },
+    openai:     { keyId: 'oa-key', statusId: 'oa-status', textId: 'oa-status-text', cardId: 'provider-openai' },
+  };
+  const m = map[provider];
+  const key = document.getElementById(m.keyId).value.trim();
+  const statusEl = document.getElementById(m.statusId);
+  const textEl = document.getElementById(m.textId);
+  const card = document.getElementById(m.cardId);
+  const btn = card.querySelector('.btn-test');
+
+  if (!key) {
+    statusEl.className = 'provider-status status-error';
+    textEl.textContent = lang === 'fr' ? 'Cle requise' : 'Key required';
+    card.className = 'provider-card error';
+    btn.className = 'btn-test error';
+    btn.textContent = 'Failed';
+    setTimeout(() => {
+      btn.className = 'btn-test';
+      btn.textContent = 'Test';
+    }, 2000);
+    return;
+  }
+
+  btn.textContent = '...';
+  btn.className = 'btn-test';
+
+  // Simulate test (in real app this hits the bridge)
+  setTimeout(() => {
+    const success = key.length > 8;
+    if (success) {
+      statusEl.className = 'provider-status status-connected';
+      textEl.textContent = lang === 'fr' ? 'Connecte' : 'Connected';
+      card.className = 'provider-card connected';
+      btn.className = 'btn-test success';
+      btn.textContent = lang === 'fr' ? 'OK' : 'OK';
+    } else {
+      statusEl.className = 'provider-status status-error';
+      textEl.textContent = lang === 'fr' ? 'Cle invalide' : 'Invalid key';
+      card.className = 'provider-card error';
+      btn.className = 'btn-test error';
+      btn.textContent = 'Failed';
+    }
+    setTimeout(() => {
+      btn.className = 'btn-test';
+      btn.textContent = 'Test';
+    }, 3000);
+  }, 800);
+}
+
+// ═════════════════════════════════════════════════════════════════════
+// Department templates
+// ═════════════════════════════════════════════════════════════════════
+function selectTemplate(el, tplKey) {
+  document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedTemplate = tplKey;
+
+  const tpl = TEMPLATES[tplKey];
+  document.getElementById('deptName').value = tpl.name[lang];
+  document.getElementById('deptDesc').value = tpl.desc[lang];
+  selectedColor = tpl.color;
+
+  document.querySelectorAll('.color-option').forEach(c => {
+    c.classList.toggle('selected', c.dataset.color === tpl.color);
+  });
+
+  // Reset agents for new template
+  currentDeptAgents = tpl.agents.map(a => ({
+    name: a.name,
+    role: a.role[lang],
+    model: 'claude-sonnet'
+  }));
+}
+
+function pickColor(el) {
+  document.querySelectorAll('.color-option').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedColor = el.dataset.color;
+}
+
+// ═════════════════════════════════════════════════════════════════════
+// Agents
+// ═════════════════════════════════════════════════════════════════════
+function renderAgents() {
+  const list = document.getElementById('agentList');
+  list.innerHTML = currentDeptAgents.map((a, i) => `
+    <div class="agent-row">
+      <div class="agent-color-dot" style="background: ${selectedColor}"></div>
+      <div class="agent-row-name">${a.name}</div>
+      <div class="agent-row-role">${a.role}</div>
+      <select onchange="currentDeptAgents[${i}].model=this.value">
+        ${MODELS.map(m => `<option value="${m.value}" ${a.model === m.value ? 'selected' : ''}>${m.label}</option>`).join('')}
+      </select>
+      <button class="btn-remove" onclick="removeAgent(${i})" title="Remove">&times;</button>
+    </div>
+  `).join('');
+}
+
+function addAgent() {
+  const input = document.getElementById('newAgentName');
+  const name = input.value.trim();
+  if (!name) return;
+  currentDeptAgents.push({ name, role: 'Custom', model: 'claude-sonnet' });
+  input.value = '';
+  renderAgents();
+}
+
+function removeAgent(index) {
+  currentDeptAgents.splice(index, 1);
+  renderAgents();
+}
+
+function saveDeptFromUI() {
+  const name = document.getElementById('deptName').value.trim();
+  if (!name) return;
+
+  // Check if we're editing an existing department
+  const existingIdx = departments.findIndex(d => d._editing);
+  if (existingIdx >= 0) {
+    departments[existingIdx] = {
+      name,
+      desc: document.getElementById('deptDesc').value.trim(),
+      color: selectedColor,
+      agents: [...currentDeptAgents]
+    };
+  } else if (departments.length === 0 || departments[departments.length - 1].name !== name) {
+    departments.push({
+      name,
+      desc: document.getElementById('deptDesc').value.trim(),
+      color: selectedColor,
+      agents: [...currentDeptAgents]
+    });
+  } else {
+    // Update last department
+    departments[departments.length - 1] = {
+      name,
+      desc: document.getElementById('deptDesc').value.trim(),
+      color: selectedColor,
+      agents: [...currentDeptAgents]
+    };
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════
+// Step 6: Department summary
+// ═════════════════════════════════════════════════════════════════════
+function renderDeptSummary() {
+  const container = document.getElementById('deptSummaryList');
+  container.innerHTML = departments.map((d, i) => `
+    <div class="dept-summary-card">
+      <div class="dept-summary-dot" style="background: ${d.color}"></div>
+      <div class="dept-summary-info">
+        <div class="dept-summary-name">${d.name}</div>
+        <div class="dept-summary-count">${d.agents.length} agent${d.agents.length !== 1 ? 's' : ''}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addAnotherDept() {
+  // Reset form for a new department
+  selectedTemplate = null;
+  document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('deptName').value = '';
+  document.getElementById('deptDesc').value = '';
+  currentDeptAgents = [];
+  selectedColor = '#3b82f6';
+  document.querySelectorAll('.color-option').forEach(c => {
+    c.classList.toggle('selected', c.dataset.color === '#3b82f6');
+  });
+  goToStep(4);
+}
+
+// ═════════════════════════════════════════════════════════════════════
+// Step 7: Final summary
+// ═════════════════════════════════════════════════════════════════════
+function renderFinalSummary() {
+  document.getElementById('summaryCompanyName').textContent =
+    document.getElementById('companyName').value || '--';
+  document.getElementById('summaryLang').textContent =
+    i18n[lang]['lang-display'];
+
+  // Providers
+  const providers = document.getElementById('summaryProviders');
+  const providerList = [
+    { name: 'Claude CLI', connected: true, color: '#d97706' },
+  ];
+  if (document.getElementById('or-key').value.length > 8)
+    providerList.push({ name: 'OpenRouter', connected: true, color: '#6366f1' });
+  if (document.getElementById('px-key').value.length > 8)
+    providerList.push({ name: 'Perplexity', connected: true, color: '#10b981' });
+  if (document.getElementById('oa-key').value.length > 8)
+    providerList.push({ name: 'OpenAI', connected: true, color: '#1a1a1a' });
+
+  providers.innerHTML = providerList.map(p => `
+    <span class="summary-provider-badge" style="background: ${p.color}15; color: ${p.color};">
+      <span class="status-dot" style="background: ${p.color}; width: 6px; height: 6px; border-radius: 50%; display: inline-block;"></span>
+      ${p.name}
+    </span>
+  `).join('');
+
+  // Teams
+  const teams = document.getElementById('summaryTeams');
+  let totalAgents = 0;
+  teams.innerHTML = departments.map(d => {
+    totalAgents += d.agents.length;
+    return `
+      <div class="summary-dept">
+        <div class="summary-dept-dot" style="background: ${d.color}"></div>
+        <div class="summary-dept-name">${d.name}</div>
+        <div class="summary-dept-agents">${d.agents.length} agent${d.agents.length !== 1 ? 's' : ''}</div>
+      </div>
+      <div class="summary-agent-list">
+        ${d.agents.map(a => `<div class="summary-agent-item">${a.name} -- ${a.model}</div>`).join('')}
+      </div>
+    `;
+  }).join('');
+
+  teams.innerHTML += `
+    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-secondary);">
+      ${departments.length} department${departments.length !== 1 ? 's' : ''}, ${totalAgents} agent${totalAgents !== 1 ? 's' : ''} total
+    </div>
+  `;
+}
+
+function launchDashboard() {
+  const btn = document.getElementById('s7-launch');
+  btn.textContent = lang === 'fr' ? 'Demarrage...' : 'Launching...';
+  btn.style.opacity = '0.7';
+  btn.style.pointerEvents = 'none';
+
+  setTimeout(() => {
+    btn.textContent = lang === 'fr' ? 'Redirection...' : 'Redirecting...';
+    // In production: window.location.href = '/dashboard'
+  }, 1200);
+}
+
+// Init
+applyTranslations();
+</script>
+</body>
+</html>
