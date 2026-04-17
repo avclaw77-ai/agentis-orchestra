@@ -394,6 +394,23 @@ export const taskLabels = pgTable(
 // CHAT -- Agent communication
 // =============================================================================
 
+export const conversations = pgTable(
+  "conversations",
+  {
+    id: text("id").primaryKey(), // uuid
+    agentId: text("agent_id")
+      .notNull()
+      .references(() => agents.id, { onDelete: "cascade" }),
+    departmentId: text("department_id").references(() => departments.id, {
+      onDelete: "cascade",
+    }),
+    title: text("title").notNull().default("New conversation"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (t) => [index("conversations_agent_idx").on(t.agentId)]
+)
+
 export const chatMessages = pgTable(
   "chat_messages",
   {
@@ -402,6 +419,9 @@ export const chatMessages = pgTable(
       onDelete: "cascade",
     }), // NULL = company-wide
     channel: text("channel").notNull(), // agent id or channel name
+    conversationId: text("conversation_id").references(() => conversations.id, {
+      onDelete: "cascade",
+    }), // NULL = legacy messages without conversation
     role: text("role").notNull(), // user | assistant
     content: text("content").notNull(),
     modelId: text("model_id"),
@@ -410,7 +430,10 @@ export const chatMessages = pgTable(
     metadata: jsonb("metadata").default({}),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
-  (t) => [index("chat_department_channel_idx").on(t.departmentId, t.channel)]
+  (t) => [
+    index("chat_department_channel_idx").on(t.departmentId, t.channel),
+    index("chat_conversation_idx").on(t.conversationId),
+  ]
 )
 
 // =============================================================================

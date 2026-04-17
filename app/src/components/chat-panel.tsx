@@ -12,6 +12,7 @@ interface ChatPanelProps {
   agentName: string
   agentDisplayName?: string
   departmentId?: string | null
+  conversationId?: string | null
   fullHeight?: boolean
 }
 
@@ -42,7 +43,7 @@ interface Message {
   usage?: TokenUsage
 }
 
-export function ChatPanel({ channel, agentName, agentDisplayName, departmentId, fullHeight }: ChatPanelProps) {
+export function ChatPanel({ channel, agentName, agentDisplayName, departmentId, conversationId, fullHeight }: ChatPanelProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [streaming, setStreaming] = useState(false)
@@ -61,11 +62,13 @@ export function ChatPanel({ channel, agentName, agentDisplayName, departmentId, 
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  // Load chat history when channel changes
+  // Load chat history when channel or conversation changes
   useEffect(() => {
     setMessages([])
     if (!channel) return
-    fetch(`/api/chat/messages?channel=${encodeURIComponent(channel)}&limit=50`)
+    const params = new URLSearchParams({ channel, limit: "50" })
+    if (conversationId) params.set("conversationId", conversationId)
+    fetch(`/api/chat/messages?${params}`)
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
         if (!data) return
@@ -80,7 +83,7 @@ export function ChatPanel({ channel, agentName, agentDisplayName, departmentId, 
         )
       })
       .catch(() => {})
-  }, [channel])
+  }, [channel, conversationId])
 
   function addBlock(messageId: string, block: MessageBlock) {
     setMessages((prev) =>
@@ -167,7 +170,7 @@ export function ChatPanel({ channel, agentName, agentDisplayName, departmentId, 
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ channel, message: userMessage.blocks[0].content, departmentId }),
+        body: JSON.stringify({ channel, message: userMessage.blocks[0].content, departmentId, conversationId }),
         signal: abortRef.current.signal,
       })
 
@@ -345,8 +348,8 @@ export function ChatPanel({ channel, agentName, agentDisplayName, departmentId, 
           </div>
         )}
 
-        {messages.map((msg) => (
-          <div key={msg.id} className={cn("flex gap-3", msg.role === "user" && "flex-row-reverse")}>
+        {messages.map((msg, msgIdx) => (
+          <div key={msg.id} className={cn("group/msg flex gap-3", msg.role === "user" && "flex-row-reverse")}>
             <div
               className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5",
                 msg.role === "user" ? "bg-secondary" : ""
@@ -360,13 +363,95 @@ export function ChatPanel({ channel, agentName, agentDisplayName, departmentId, 
             </div>
 
             <div className={cn("max-w-[80%] space-y-1.5", msg.role === "user" && "text-right")}>
-              {msg.blocks.map((block, i) => (
-                <BlockRenderer key={i} block={block} role={msg.role} />
-              ))}
+              {/* Edit mode for user messages */}
+              {editingMessageId === msg.id ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    className="w-full bg-inset rounded-lg px-3 py-2 text-sm outline-none resize-none border border-border min-w-[250px]"
+                    rows={3}
+                    autoFocus
+                  />
+                  <div className="flex gap-1.5 justify-end">
+                    <button
+                      onClick={() => setEditingMessageId(null)}
+                      className="px-2.5 py-1 text-xs rounded-lg hover:bg-secondary"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (!editText.trim()) return
+                        // Remove this message and all after it, then resend
+                        const newMessages = messages.slice(0, msgIdx)
+                        setMessages(newMessages)
+                        setEditingMessageId(null)
+                        setInput(editText.trim())
+                        // Auto-send after state update
+                        setTimeout(() => {
+                          const sendBtn = document.querySelector("[data-send-btn]") as HTMLButtonElement
+                          sendBtn?.click()
+                        }, 50)
+                      }}
+                      className="px-2.5 py-1 text-xs rounded-lg bg-primary text-primary-foreground"
+                    >
+                      Resend
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {msg.blocks.map((block, i) => (
+                    <BlockRenderer key={i} block={block} role={msg.role} />
+                  ))}
+                </>
+              )}
               {msg.streaming && msg.blocks.length === 0 && (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
                   <Loader2 size={12} className="animate-spin" />
                   <span>Thinking...</span>
+                </div>
+              )}
+              {/* Action buttons: edit/retry for user, token count for assistant */}
+              {!msg.streaming && !editingMessageId && (
+                <div className={cn(
+                  "flex items-center gap-1.5 mt-0.5 opacity-0 group-hover/msg:opacity-100 transition-opacity",
+                  msg.role === "user" ? "justify-end" : "justify-start"
+                )}>
+                  {msg.role === "user" && (
+                    <>
+                      <button
+                        onClick={() => { setEditingMessageId(msg.id); setEditText(msg.blocks[0]?.content || "") }}
+                        className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                        title="Edit message"
+                      >
+                        <Pencil size={11} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          // Retry: remove this message + its response, resend
+                          const newMessages = messages.slice(0, msgIdx)
+                          setMessages(newMessages)
+                          setInput(msg.blocks[0]?.content || "")
+                          setTimeout(() => {
+                            const sendBtn = document.querySelector("[data-send-btn]") as HTMLButtonElement
+                            sendBtn?.click()
+                          }, 50)
+                        }}
+                        className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                        title="Retry message"
+                      >
+                        <RotateCcw size={11} />
+                      </button>
+                    </>
+                  )}
+                  {msg.role === "assistant" && msg.usage && (
+                    <span className="flex items-center gap-1 text-[10px] text-muted-foreground/60" title={`Input: ${msg.usage.inputTokens || 0} / Output: ${msg.usage.outputTokens || 0}${msg.usage.cost ? ` / $${msg.usage.cost.toFixed(4)}` : ""}`}>
+                      <Coins size={10} />
+                      {formatTokenCount((msg.usage.inputTokens || 0) + (msg.usage.outputTokens || 0))}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -412,6 +497,7 @@ export function ChatPanel({ channel, agentName, agentDisplayName, departmentId, 
             disabled={streaming}
           />
           <button
+            data-send-btn
             onClick={handleSend}
             disabled={(!input.trim() && !attachedFile) || streaming}
             className={cn(
@@ -522,4 +608,10 @@ function BlockRenderer({ block, role }: { block: MessageBlock; role: string }) {
     default:
       return <div className="text-sm">{block.content}</div>
   }
+}
+
+function formatTokenCount(count: number): string {
+  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`
+  if (count >= 1_000) return `${(count / 1_000).toFixed(1)}K`
+  return count.toString()
 }

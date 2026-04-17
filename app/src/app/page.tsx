@@ -26,6 +26,8 @@ import { FileBrowser } from "@/components/file-browser"
 import { ModelSandbox } from "@/components/model-sandbox"
 import { ProviderKeys } from "@/components/provider-keys"
 import { SearchModal } from "@/components/search-modal"
+import { ConversationList } from "@/components/conversation-list"
+import { OnboardingChecklist } from "@/components/onboarding-checklist"
 import { DashboardSkeleton, KanbanSkeleton, ChatSkeleton } from "@/components/loading-skeleton"
 import type {
   Agent,
@@ -51,6 +53,7 @@ interface CompanyInfo {
 export default function DashboardPage() {
   const [view, setView] = useState<View>("dashboard")
   const [selectedAgent, setSelectedAgent] = useState<string>("")
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null)
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null)
   const [agents, setAgents] = useState<Agent[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
@@ -915,6 +918,14 @@ export default function DashboardPage() {
       {view === "dashboard" && initialLoading && <DashboardSkeleton />}
       {view === "dashboard" && !initialLoading && (
         <>
+          <div className="px-6 pt-6">
+            <OnboardingChecklist
+              agentCount={agents.length}
+              departmentCount={departments.length}
+              onNavigate={(v) => setView(v as View)}
+              onDismiss={() => {}}
+            />
+          </div>
           <DashboardHome
             agents={visibleAgents}
             departments={departments}
@@ -955,21 +966,53 @@ export default function DashboardPage() {
 
       {view === "chat" && (
         <div className="flex flex-col md:flex-row h-full">
-          <div className="md:w-64 md:border-r border-b md:border-b-0 border-border p-2 md:p-4 overflow-x-auto md:overflow-y-auto flex md:flex-col gap-2 md:gap-0 shrink-0">
+          {/* Agent roster */}
+          <div className="md:w-52 md:border-r border-b md:border-b-0 border-border p-2 md:p-3 overflow-x-auto md:overflow-y-auto flex md:flex-col gap-2 md:gap-0 shrink-0">
             <AgentRoster
               agents={visibleAgents}
               selectedAgent={selectedAgent}
-              onSelectAgent={setSelectedAgent}
+              onSelectAgent={(id) => {
+                setSelectedAgent(id)
+                setSelectedConversation(null) // reset conversation when switching agent
+              }}
               onAgentsUpdate={handleAgentsUpdate}
               compact
             />
           </div>
+          {/* Conversation sidebar */}
+          <div className="hidden md:flex md:w-48 md:border-r border-border flex-col shrink-0">
+            <ConversationList
+              agentId={selectedAgent}
+              activeConversationId={selectedConversation}
+              onSelect={setSelectedConversation}
+              onNew={async () => {
+                try {
+                  const res = await fetch("/api/conversations", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      agentId: selectedAgent,
+                      departmentId: selectedDepartment,
+                    }),
+                  })
+                  if (res.ok) {
+                    const conv = await res.json()
+                    setSelectedConversation(conv.id)
+                  }
+                } catch {
+                  toast.error("Failed to create conversation")
+                }
+              }}
+            />
+          </div>
+          {/* Chat panel */}
           <div className="flex-1 min-h-0">
             <ChatPanel
               channel={selectedAgent}
               agentName={agents.find((a) => a.id === selectedAgent)?.name || "Agent"}
               agentDisplayName={agents.find((a) => a.id === selectedAgent)?.displayName || undefined}
               departmentId={selectedDepartment}
+              conversationId={selectedConversation}
               fullHeight
             />
           </div>

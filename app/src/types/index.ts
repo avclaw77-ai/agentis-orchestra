@@ -196,10 +196,22 @@ export interface Label {
 // Chat
 // =============================================================================
 
+export interface Conversation {
+  id: string
+  agentId: string
+  departmentId: string | null
+  title: string
+  createdAt: string
+  updatedAt: string
+  messageCount?: number
+  lastMessage?: string
+}
+
 export interface ChatMessage {
   id: number
   departmentId: string | null
   channel: string
+  conversationId: string | null
   role: "user" | "assistant"
   content: string
   createdAt: string

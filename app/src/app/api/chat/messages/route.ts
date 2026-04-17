@@ -9,6 +9,7 @@ export async function GET(req: NextRequest) {
   const user = await getSessionUser()
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   const channel = req.nextUrl.searchParams.get("channel")
+  const conversationId = req.nextUrl.searchParams.get("conversationId")
   const limit = parseInt(req.nextUrl.searchParams.get("limit") || "50", 10)
   const before = req.nextUrl.searchParams.get("before")
 
@@ -21,6 +22,10 @@ export async function GET(req: NextRequest) {
 
   try {
     const conditions = [eq(chatMessages.channel, channel)]
+
+    if (conversationId) {
+      conditions.push(eq(chatMessages.conversationId, conversationId))
+    }
 
     if (before) {
       conditions.push(lt(chatMessages.id, parseInt(before, 10)))

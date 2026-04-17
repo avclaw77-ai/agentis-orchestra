@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { channel, message, departmentId } = body
+  const { channel, message, departmentId, conversationId } = body
 
   if (!channel || !message) {
     return new Response(
@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
       channel,
       message,
       departmentId: departmentId || null,
+      conversationId: conversationId || null,
     }),
   })
 
