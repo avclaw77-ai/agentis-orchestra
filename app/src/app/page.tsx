@@ -132,6 +132,33 @@ export default function DashboardPage() {
     fetchData()
   }, [])
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      // Cmd+K or Ctrl+K -> focus chat (quick access)
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault()
+        setView("chat")
+      }
+      // Escape -> close panels
+      if (e.key === "Escape") {
+        if (selectedAgentForProfile) setSelectedAgentForProfile(null)
+        else if (selectedTaskId) setSelectedTaskId(null)
+        else if (showCreateTask) setShowCreateTask(false)
+        else if (showRoutineBuilder) setShowRoutineBuilder(false)
+      }
+      // Cmd+1-9 for quick nav
+      if ((e.metaKey || e.ctrlKey) && e.key >= "1" && e.key <= "9") {
+        e.preventDefault()
+        const views: View[] = ["dashboard", "chat", "tasks", "files", "goals", "routines", "approvals", "costs", "models"]
+        const idx = parseInt(e.key) - 1
+        if (idx < views.length) setView(views[idx])
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [selectedAgentForProfile, selectedTaskId, showCreateTask, showRoutineBuilder])
+
   // Fetch tasks when department changes or view switches to tasks
   const fetchTasks = useCallback(async () => {
     try {

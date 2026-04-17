@@ -46,33 +46,33 @@ interface ShellProps {
 
 interface NavGroup {
   label: string
-  items: { key: View; label: string; icon: React.ReactNode }[]
+  items: { key: View; label: string; icon: React.ReactNode; help?: string }[]
 }
 
 const NAV_GROUPS: NavGroup[] = [
   {
     label: "Core",
     items: [
-      { key: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} /> },
-      { key: "chat", label: "Chat", icon: <MessageSquare size={18} /> },
-      { key: "tasks", label: "Tasks", icon: <KanbanSquare size={18} /> },
-      { key: "files", label: "Files", icon: <FolderOpen size={18} /> },
+      { key: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} />, help: "Overview of agents, tasks, activity, and costs" },
+      { key: "chat", label: "Chat", icon: <MessageSquare size={18} />, help: "Talk to any agent -- they respond with their persona and tools" },
+      { key: "tasks", label: "Tasks", icon: <KanbanSquare size={18} />, help: "Kanban board for managing work items across departments" },
+      { key: "files", label: "Files", icon: <FolderOpen size={18} />, help: "Browse agent outputs, uploads, and workspace files" },
     ],
   },
   {
     label: "Operate",
     items: [
-      { key: "goals", label: "Goals", icon: <Target size={18} /> },
-      { key: "routines", label: "Routines", icon: <Repeat size={18} /> },
-      { key: "approvals", label: "Approvals", icon: <ShieldCheck size={18} /> },
-      { key: "costs", label: "Costs", icon: <DollarSign size={18} /> },
+      { key: "goals", label: "Goals", icon: <Target size={18} />, help: "Strategic objectives -- company mission down to department targets" },
+      { key: "routines", label: "Routines", icon: <Repeat size={18} />, help: "Automated multi-step workflows triggered by cron, webhook, or manual" },
+      { key: "approvals", label: "Approvals", icon: <ShieldCheck size={18} />, help: "Review and approve agent requests before they execute" },
+      { key: "costs", label: "Costs", icon: <DollarSign size={18} />, help: "Token usage, budget policies, and spending by agent/department" },
     ],
   },
   {
     label: "System",
     items: [
-      { key: "models", label: "Models", icon: <Cpu size={18} /> },
-      { key: "settings", label: "Settings", icon: <Settings size={18} /> },
+      { key: "models", label: "Models", icon: <Cpu size={18} />, help: "AI model configuration, sandbox testing, and API key management" },
+      { key: "settings", label: "Settings", icon: <Settings size={18} />, help: "Company settings, team management, connectors, and export/import" },
     ],
   },
 ]
@@ -287,7 +287,7 @@ export function Shell({
                           ? "bg-secondary text-foreground font-medium"
                           : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
                       )}
-                      title={isCollapsed ? item.label : undefined}
+                      title={isCollapsed ? item.label : item.help || item.label}
                     >
                       {/* Active indicator -- left border */}
                       {isActive && (
