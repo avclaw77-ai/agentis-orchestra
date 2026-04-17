@@ -72,7 +72,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-card border border-border rounded-xl p-6 space-y-4">
+        <form onSubmit={handleSubmit} action="javascript:void(0)" method="post" className="bg-card border border-border rounded-xl p-6 space-y-4">
           <div>
             <label className="text-sm font-medium" htmlFor="email">Email</label>
             <input
