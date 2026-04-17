@@ -837,8 +837,8 @@ export default function DashboardPage() {
       )}
 
       {view === "chat" && (
-        <div className="flex h-full">
-          <div className="w-64 border-r border-border p-4 overflow-y-auto">
+        <div className="flex flex-col md:flex-row h-full">
+          <div className="md:w-64 md:border-r border-b md:border-b-0 border-border p-2 md:p-4 overflow-x-auto md:overflow-y-auto flex md:flex-col gap-2 md:gap-0 shrink-0">
             <AgentRoster
               agents={visibleAgents}
               selectedAgent={selectedAgent}
@@ -847,7 +847,7 @@ export default function DashboardPage() {
               compact
             />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-h-0">
             <ChatPanel
               channel={selectedAgent}
               agentName={agents.find((a) => a.id === selectedAgent)?.name || "Agent"}
@@ -860,7 +860,7 @@ export default function DashboardPage() {
       )}
 
       {view === "tasks" && (
-        <div className="p-6">
+        <div className="p-3 md:p-6">
           <KanbanBoard
             tasks={tasks}
             agents={agents}
@@ -976,7 +976,7 @@ export default function DashboardPage() {
           <h2 className="text-lg font-semibold mb-4">Settings</h2>
 
           {/* Settings tabs */}
-          <div className="flex items-center gap-1 bg-secondary rounded-lg p-0.5 mb-6 w-fit">
+          <div className="flex flex-wrap items-center gap-1 bg-secondary rounded-lg p-0.5 mb-6">
             {(
               [
                 { key: "general", label: "General" },

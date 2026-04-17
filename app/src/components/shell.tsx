@@ -351,7 +351,7 @@ export function Shell({
       <div className="md:hidden fixed top-0 left-0 right-0 z-30 h-12 bg-card border-b border-border flex items-center px-3 gap-3">
         <button
           onClick={() => setMobileOpen(true)}
-          className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+          className="p-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
         >
           <Menu size={20} />
         </button>
@@ -375,7 +375,7 @@ export function Shell({
             <div className="absolute top-3 right-3 z-10">
               <button
                 onClick={() => setMobileOpen(false)}
-                className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                className="p-2.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
               >
                 <X size={18} />
               </button>

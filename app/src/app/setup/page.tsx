@@ -354,7 +354,7 @@ export default function SetupPage() {
       </div>
 
       {/* Step content */}
-      <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">
+      <div className="bg-card border border-border rounded-2xl p-5 md:p-8 shadow-sm">
         {step === 0 && <WelcomeStep locale={locale} onLocaleChange={setLocale} />}
         {step === 1 && <AdminStep data={admin} onChange={setAdmin} />}
         {step === 2 && (

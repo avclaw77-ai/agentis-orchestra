@@ -110,7 +110,7 @@ function KanbanColumn({
           <span className="text-muted-foreground font-normal">({tasks.length})</span>
         </h3>
       </div>
-      <div className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-260px)]">
+      <div className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-260px)]">
         {tasks.length === 0 ? (
           <div
             className={cn(

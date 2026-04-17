@@ -311,7 +311,7 @@ export function RoutineBuilder({
             <div>
               <label className="text-sm font-medium mb-2 block">Trigger</label>
               <div className="space-y-2">
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {(["manual", "cron", "webhook"] as const).map((t) => (
                     <button
                       key={t}

@@ -290,7 +290,7 @@ export function TaskDetail({
                   onClick={handleSendComment}
                   disabled={!commentText.trim()}
                   className={cn(
-                    "p-2 rounded-lg transition-colors",
+                    "p-3 rounded-lg transition-colors",
                     commentText.trim()
                       ? "bg-primary text-primary-foreground hover:bg-primary/90"
                       : "bg-secondary text-muted-foreground"
