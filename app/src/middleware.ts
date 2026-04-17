@@ -19,14 +19,14 @@ export function middleware(req: NextRequest) {
   const setupDone = req.cookies.get("ao_setup_done")?.value === "1"
   const hasSession = !!req.cookies.get("ao_session")?.value
 
-  // Not set up yet -> redirect to setup
+  // No setup cookie -- could be first run OR cookie cleared after rebuild
+  // Redirect to /login which will check DB and either show login or redirect to /setup
   if (!setupDone) {
-    // Check if this is an API call
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Setup not completed" }, { status: 503 })
     }
-    if (pathname !== "/setup" && !pathname.startsWith("/setup")) {
-      return NextResponse.redirect(new URL("/setup", req.url))
+    if (pathname !== "/setup" && !pathname.startsWith("/setup") && pathname !== "/login") {
+      return NextResponse.redirect(new URL("/login", req.url))
     }
     return NextResponse.next()
   }
