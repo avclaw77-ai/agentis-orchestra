@@ -1,7 +1,9 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
-import { Send, Bot, User, Wrench, Brain, Cpu, Loader2, Paperclip } from "lucide-react"
+import { useState, useRef, useEffect, useCallback } from "react"
+import { Send, Bot, User, Wrench, Brain, Cpu, Loader2, Paperclip, Square, Copy, Check } from "lucide-react"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import { cn } from "@/lib/utils"
 import { AGENT_COLORS } from "@/lib/constants"
 
@@ -39,6 +41,12 @@ export function ChatPanel({ channel, agentName, agentDisplayName, departmentId, 
   const [streaming, setStreaming] = useState(false)
   const [attachedFile, setAttachedFile] = useState<File | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const abortRef = useRef<AbortController | null>(null)
+
+  const handleStop = useCallback(() => {
+    abortRef.current?.abort()
+    setStreaming(false)
+  }, [])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -96,16 +104,32 @@ export function ChatPanel({ channel, agentName, agentDisplayName, departmentId, 
     let messageText = input.trim()
     if (attachedFile) {
       try {
-        const fileContent = await attachedFile.text()
-        const fileInfo = `[Attached file: ${attachedFile.name} (${(attachedFile.size / 1024).toFixed(1)} KB)]\n\n${fileContent}`
-        messageText = messageText ? `${messageText}\n\n${fileInfo}` : fileInfo
+        const isText = attachedFile.type.startsWith("text/") || ["application/json", "application/xml"].includes(attachedFile.type)
+        const isImage = attachedFile.type.startsWith("image/")
 
-        // Also upload to workspace
-        fetch("/api/files", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ filename: attachedFile.name, content: fileContent, path: "uploads", agentId: channel }),
-        }).catch(() => {})
+        if (isText) {
+          const fileContent = await attachedFile.text()
+          const fileInfo = `[Attached file: ${attachedFile.name} (${(attachedFile.size / 1024).toFixed(1)} KB)]\n\n\`\`\`\n${fileContent}\n\`\`\``
+          messageText = messageText ? `${messageText}\n\n${fileInfo}` : fileInfo
+          // Save to workspace
+          fetch("/api/files", { method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ filename: attachedFile.name, content: fileContent, path: "uploads", agentId: channel }),
+          }).catch(() => {})
+        } else if (isImage) {
+          // Read as base64 for vision-capable models
+          const base64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader()
+            reader.onload = () => resolve(reader.result as string)
+            reader.readAsDataURL(attachedFile)
+          })
+          messageText = messageText ? `${messageText}\n\n[Image: ${attachedFile.name}]` : `[Image: ${attachedFile.name}]`
+          // Save to workspace
+          fetch("/api/files", { method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ filename: attachedFile.name, content: base64, path: "uploads", agentId: channel }),
+          }).catch(() => {})
+        } else {
+          messageText = messageText || `[Attached file: ${attachedFile.name} (${attachedFile.type})]`
+        }
       } catch {
         messageText = messageText || `[Attached file: ${attachedFile.name}]`
       }
@@ -130,10 +154,12 @@ export function ChatPanel({ channel, agentName, agentDisplayName, departmentId, 
     ])
 
     try {
+      abortRef.current = new AbortController()
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ channel, message: userMessage.blocks[0].content, departmentId }),
+        signal: abortRef.current.signal,
       })
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -263,10 +289,13 @@ export function ChatPanel({ channel, agentName, agentDisplayName, departmentId, 
           {agentDisplayName && <p className="text-[10px] text-muted-foreground">{agentName} agent</p>}
         </div>
         {streaming && (
-          <div className="ml-auto flex items-center gap-1.5 text-xs text-primary">
-            <Loader2 size={12} className="animate-spin" />
-            <span>Working...</span>
-          </div>
+          <button
+            onClick={handleStop}
+            className="ml-auto flex items-center gap-1.5 text-xs text-red-500 hover:text-red-600 px-2.5 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
+          >
+            <Square size={10} className="fill-current" />
+            <span>Stop</span>
+          </button>
         )}
       </div>
 
@@ -368,17 +397,35 @@ export function ChatPanel({ channel, agentName, agentDisplayName, departmentId, 
 // Block Renderer -- visual treatment for each stream event type
 // =============================================================================
 
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false)
+  return (
+    <button
+      onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
+      className="opacity-0 group-hover:opacity-100 p-1 rounded text-muted-foreground hover:text-foreground transition-all"
+      title="Copy"
+    >
+      {copied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
+    </button>
+  )
+}
+
 function BlockRenderer({ block, role }: { block: MessageBlock; role: string }) {
   switch (block.type) {
     case "text":
+      if (role === "user") {
+        return (
+          <div className="bg-primary text-primary-foreground rounded-2xl rounded-tr-md px-4 py-2.5 inline-block text-sm leading-relaxed whitespace-pre-wrap">
+            {block.content}
+          </div>
+        )
+      }
       return (
-        <div className={cn(
-          "text-sm leading-relaxed whitespace-pre-wrap",
-          role === "user"
-            ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-md px-4 py-2.5 inline-block"
-            : "text-foreground"
-        )}>
-          {block.content}
+        <div className="group relative text-sm leading-relaxed">
+          <div className="absolute -right-8 top-0"><CopyButton text={block.content} /></div>
+          <div className="prose prose-sm prose-slate max-w-none [&_pre]:bg-slate-50 [&_pre]:border [&_pre]:border-slate-200 [&_pre]:rounded-lg [&_pre]:text-xs [&_code]:text-xs [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:before:content-none [&_code]:after:content-none [&_p]:my-2 [&_ul]:my-2 [&_ol]:my-2 [&_li]:my-0.5 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_h1]:font-bold [&_h2]:font-semibold [&_h3]:font-semibold [&_table]:text-xs [&_th]:px-3 [&_th]:py-1.5 [&_td]:px-3 [&_td]:py-1.5 [&_blockquote]:border-l-primary [&_a]:text-primary">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{block.content}</ReactMarkdown>
+          </div>
         </div>
       )
 
