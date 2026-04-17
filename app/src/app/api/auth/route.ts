@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     const response = NextResponse.json({ user: { id: userId, email, name, role: "admin" } }, { status: 201 })
     response.cookies.set(COOKIE_NAME, token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.SECURE_COOKIES === "true",
       sameSite: "lax",
       path: "/",
       expires: expiresAt,
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
     const response = NextResponse.json({ user: { id: user.id, email: user.email, name: user.name, role: user.role } })
     response.cookies.set(COOKIE_NAME, token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.SECURE_COOKIES === "true",
       sameSite: "lax",
       path: "/",
       expires: expiresAt,
