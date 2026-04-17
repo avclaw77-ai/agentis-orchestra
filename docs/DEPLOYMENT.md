@@ -433,6 +433,179 @@ Add:
 
 ---
 
+## Path 4: Mac Mini (Client On-Premises)
+
+Same architecture as VPS, adapted for macOS. Ideal for clients who want data on-premises.
+
+### Prerequisites
+
+- Mac Mini (M1/M2/M4, 8GB+ RAM)
+- macOS 14+
+- Docker Desktop for Mac
+- Homebrew
+
+### Step 1: Install dependencies
+
+```bash
+# Docker Desktop
+brew install --cask docker
+# Start Docker Desktop from Applications
+
+# Node.js + pnpm
+brew install node
+npm install -g pnpm
+
+# Claude Code CLI
+npm install -g @anthropic-ai/claude-code
+```
+
+### Step 2: Create user + authenticate CLI
+
+```bash
+# Create dedicated user (optional -- can use your own account)
+sudo dscl . -create /Users/orchestra
+sudo dscl . -create /Users/orchestra UserShell /bin/zsh
+sudo dscl . -create /Users/orchestra NFSHomeDirectory /Users/orchestra
+sudo mkdir -p /Users/orchestra && sudo chown orchestra /Users/orchestra
+
+# Authenticate CLI (as the orchestra user or your account)
+claude auth login
+# Complete browser OAuth flow
+
+# Verify
+claude -p "say hello" --output-format json
+```
+
+### Step 3: Clone and configure
+
+```bash
+cd /opt  # or ~/Orchestra
+git clone https://github.com/avclaw77-ai/AgentisOrchestra.git
+cd AgentisOrchestra
+make setup  # generates .env with secrets
+
+# Edit .env
+nano .env
+# Set: ADAPTER_MODE=cli
+# Set: CLAUDE_CLI_PATH=$(which claude)
+```
+
+### Step 4: Build bridge on host
+
+```bash
+cd bridge && pnpm install && pnpm build && cd ..
+```
+
+### Step 5: Create launchd service (macOS equivalent of systemd)
+
+```bash
+cat > ~/Library/LaunchAgents/ai.agentislab.orchestra-bridge.plist << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>ai.agentislab.orchestra-bridge</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/node</string>
+        <string>/opt/AgentisOrchestra/bridge/dist/server.js</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/opt/AgentisOrchestra/bridge</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>NODE_ENV</key>
+        <string>production</string>
+        <key>PORT</key>
+        <string>3847</string>
+        <key>MCP_PORT</key>
+        <string>3848</string>
+        <key>DATABASE_URL</key>
+        <string>postgres://agentis:YOUR_DB_PASSWORD@127.0.0.1:5432/agentis_orchestra</string>
+        <key>BRIDGE_TOKEN</key>
+        <string>YOUR_BRIDGE_TOKEN</string>
+        <key>CLAUDE_CLI_PATH</key>
+        <string>/usr/local/bin/claude</string>
+        <key>ADAPTER_MODE</key>
+        <string>cli</string>
+        <key>APP_URL</key>
+        <string>http://localhost:3000</string>
+    </dict>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/tmp/orchestra-bridge.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/orchestra-bridge.err</string>
+</dict>
+</plist>
+EOF
+
+# Load the service
+launchctl load ~/Library/LaunchAgents/ai.agentislab.orchestra-bridge.plist
+```
+
+### Step 6: Configure Docker for app + db only
+
+Same as VPS -- stub the bridge in docker-compose and point app to host:
+
+```bash
+python3 -c "
+import yaml
+with open('docker-compose.yml') as f:
+    d = yaml.safe_load(f)
+d['services']['bridge'] = {
+    'image': 'alpine:3.19',
+    'command': ['sleep', 'infinity'],
+    'restart': 'no',
+    'networks': ['orchestra'],
+    'healthcheck': {'test': ['CMD-SHELL', 'true'], 'interval': '5s', 'retries': 1}
+}
+d['services']['app']['environment']['BRIDGE_URL'] = 'http://host.docker.internal:3847'
+d['services']['app']['extra_hosts'] = ['host.docker.internal:host-gateway']
+d['services']['app']['depends_on'] = {'db': {'condition': 'service_healthy'}}
+with open('docker-compose.yml', 'w') as f:
+    yaml.dump(d, f, default_flow_style=False, sort_keys=False)
+"
+```
+
+Note: `host.docker.internal` works natively on Docker Desktop for Mac (no extra_hosts needed, but included for consistency).
+
+### Step 7: Start everything
+
+```bash
+docker compose up -d   # starts db + app
+# Bridge is already running via launchd
+```
+
+### Mac-specific management
+
+```bash
+# Bridge status
+launchctl list | grep orchestra
+
+# View logs
+tail -f /tmp/orchestra-bridge.log
+
+# Restart bridge
+launchctl stop ai.agentislab.orchestra-bridge
+launchctl start ai.agentislab.orchestra-bridge
+
+# Re-authenticate CLI
+claude auth login
+launchctl stop ai.agentislab.orchestra-bridge
+launchctl start ai.agentislab.orchestra-bridge
+
+# Stop everything
+launchctl unload ~/Library/LaunchAgents/ai.agentislab.orchestra-bridge.plist
+docker compose down
+```
+
+---
+
 ## Updating
 
 ### From Git (build on server)

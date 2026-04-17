@@ -2,6 +2,46 @@
 
 All notable changes to AgentisOrchestra are documented here.
 
+## [0.4.0] -- 2026-04-17
+
+### Added
+- **Models Sandbox** -- test any model from the browser with prompt presets and markdown rendering
+- **API Key Management** -- add, rotate, delete provider keys from Models > API Keys (encrypted AES-256-GCM)
+- **Files View** -- browse agent outputs, preview text/code/markdown, upload files, filter by agent
+- **File Attachments in Chat** -- attach files via paperclip button, text/image support
+- **Password Change** -- Settings > General, verifies current password, scrypt hashing
+- **Approval Badge** -- red count badge on Approvals nav when pending requests exist
+- **Task Search/Filter** -- search by title, filter by priority and assignee on Kanban board
+- **Skills Library Upgrade** -- search, source filter, structured definition display (23 skills populated)
+- **Keyboard Shortcuts** -- Cmd+K (chat), Cmd+1-9 (nav), Escape (close panels)
+- **Contextual Help Tooltips** -- hover descriptions on all nav items
+- **10 Connector Templates** -- Slack, HubSpot, GitHub, CSV/Excel, PDF, PostgreSQL, MySQL, SMTP, Webhooks
+- **Mac Mini Deployment Guide** -- launchd plist, full macOS setup procedure
+
+### Fixed
+- **Login works on HTTP** -- session cookie Secure flag only when SECURE_COOKIES=true
+- **Login redirect loop** -- / goes to /login not /setup when cookie missing
+- **Login form hydration** -- native submit prevented before React attaches handler
+- **Login error messages** -- red alert box with specific messages (wrong password, disabled, connection)
+- **Chat markdown rendering** -- responses render bold, lists, code blocks, tables via react-markdown
+- **Chat stop button** -- AbortController kills generation, red stop icon in header
+- **Chat copy button** -- hover-reveal clipboard copy on assistant messages
+- **Chat image upload** -- binary files handled as base64, not garbage text
+- **9 responsive UI fixes** -- mobile touch targets, wrapping, padding across all views
+
+### Security
+- Auth bypass on /api/auth/me fixed (was returning admin for unauthenticated)
+- Setup API error messages sanitized (no raw DB errors)
+- Company export requires admin auth
+- Task ID race condition fixed (count + fallback)
+
+### Documentation
+- Feature gap analysis: design/FEATURE_GAPS.md (25 items tracked)
+- Token economics: design/TOKEN_ECONOMICS.md
+- Connector plan: design/CONNECTORS_PLAN.md
+- Mac Mini deployment: docs/DEPLOYMENT.md Path 4
+- 82 E2E API tests + 37 user flow tests
+
 ## [0.3.0] -- 2026-04-16
 
 ### Added
