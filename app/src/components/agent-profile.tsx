@@ -17,15 +17,20 @@ import type { Agent, AgentConfig, HeartbeatRun, Department } from "@/types"
 // ---------------------------------------------------------------------------
 
 const MODEL_OPTIONS = [
-  { id: "claude-cli:opus", name: "Claude Opus (CLI)", costTier: "FREE" },
-  { id: "claude-cli:sonnet", name: "Claude Sonnet (CLI)", costTier: "FREE" },
-  { id: "claude-cli:haiku", name: "Claude Haiku (CLI)", costTier: "FREE" },
+  { id: "claude-cli:opus", name: "Claude Opus 4.6 (CLI)", costTier: "FREE" },
+  { id: "claude-cli:sonnet", name: "Claude Sonnet 4.6 (CLI)", costTier: "FREE" },
+  { id: "claude-cli:haiku", name: "Claude Haiku 4.5 (CLI)", costTier: "FREE" },
   { id: "perplexity:sonar-pro", name: "Perplexity Sonar Pro", costTier: "$$" },
   { id: "perplexity:sonar", name: "Perplexity Sonar", costTier: "$" },
-  { id: "openai:gpt-4o", name: "GPT-4o", costTier: "$$" },
-  { id: "openai:gpt-4o-mini", name: "GPT-4o Mini", costTier: "$" },
+  { id: "openai:gpt-4.1", name: "GPT-4.1", costTier: "$$" },
+  { id: "openai:gpt-4.1-mini", name: "GPT-4.1 Mini", costTier: "$" },
+  { id: "openai:gpt-4.1-nano", name: "GPT-4.1 Nano", costTier: "$" },
+  { id: "openai:o4-mini", name: "OpenAI o4-mini", costTier: "$$" },
+  { id: "openai:o3", name: "OpenAI o3", costTier: "$$$" },
   { id: "openrouter:deepseek-v3", name: "DeepSeek V3", costTier: "$" },
   { id: "openrouter:gemini-2.5-pro", name: "Gemini 2.5 Pro", costTier: "$$" },
+  { id: "openrouter:llama-4-maverick", name: "Llama 4 Maverick", costTier: "$" },
+  { id: "openrouter:qwen-3-235b", name: "Qwen 3 235B", costTier: "$" },
 ]
 
 const ADAPTER_OPTIONS = [

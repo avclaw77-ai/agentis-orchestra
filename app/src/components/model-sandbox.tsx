@@ -22,15 +22,20 @@ interface SandboxResult {
 }
 
 const MODELS: ModelOption[] = [
-  { id: "claude-cli:opus", name: "Claude Opus", provider: "Claude CLI", costTier: "free", mode: "cli" },
-  { id: "claude-cli:sonnet", name: "Claude Sonnet", provider: "Claude CLI", costTier: "free", mode: "cli" },
-  { id: "claude-cli:haiku", name: "Claude Haiku", provider: "Claude CLI", costTier: "free", mode: "cli" },
+  { id: "claude-cli:opus", name: "Claude Opus 4.6", provider: "Claude CLI", costTier: "free", mode: "cli" },
+  { id: "claude-cli:sonnet", name: "Claude Sonnet 4.6", provider: "Claude CLI", costTier: "free", mode: "cli" },
+  { id: "claude-cli:haiku", name: "Claude Haiku 4.5", provider: "Claude CLI", costTier: "free", mode: "cli" },
   { id: "perplexity:sonar-pro", name: "Sonar Pro", provider: "Perplexity", costTier: "standard", mode: "api" },
   { id: "perplexity:sonar", name: "Sonar", provider: "Perplexity", costTier: "cheap", mode: "api" },
-  { id: "openai:gpt-4o", name: "GPT-4o", provider: "OpenAI", costTier: "standard", mode: "api" },
-  { id: "openai:gpt-4o-mini", name: "GPT-4o Mini", provider: "OpenAI", costTier: "cheap", mode: "api" },
+  { id: "openai:gpt-4.1", name: "GPT-4.1", provider: "OpenAI", costTier: "standard", mode: "api" },
+  { id: "openai:gpt-4.1-mini", name: "GPT-4.1 Mini", provider: "OpenAI", costTier: "cheap", mode: "api" },
+  { id: "openai:gpt-4.1-nano", name: "GPT-4.1 Nano", provider: "OpenAI", costTier: "cheap", mode: "api" },
+  { id: "openai:o4-mini", name: "o4-mini", provider: "OpenAI", costTier: "standard", mode: "api" },
+  { id: "openai:o3", name: "o3", provider: "OpenAI", costTier: "premium", mode: "api" },
   { id: "openrouter:deepseek-v3", name: "DeepSeek V3", provider: "OpenRouter", costTier: "cheap", mode: "api" },
   { id: "openrouter:gemini-2.5-pro", name: "Gemini 2.5 Pro", provider: "OpenRouter", costTier: "standard", mode: "api" },
+  { id: "openrouter:llama-4-maverick", name: "Llama 4 Maverick", provider: "OpenRouter", costTier: "cheap", mode: "api" },
+  { id: "openrouter:qwen-3-235b", name: "Qwen 3 235B", provider: "OpenRouter", costTier: "cheap", mode: "api" },
 ]
 
 const COST_BADGE: Record<string, string> = {

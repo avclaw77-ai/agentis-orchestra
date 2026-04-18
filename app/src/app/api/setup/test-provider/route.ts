@@ -323,7 +323,7 @@ async function testOpenAI(
 
     const data = await res.json()
     // Filter to notable models
-    const notable = ["gpt-4o", "gpt-4o-mini", "o3", "o3-mini", "o4-mini"]
+    const notable = ["gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano", "o4-mini", "o3", "o3-mini"]
     const modelIds = Array.isArray(data?.data)
       ? data.data
           .map((m: { id: string }) => m.id)
@@ -334,7 +334,7 @@ async function testOpenAI(
     return {
       provider: "openai",
       valid: true,
-      models: modelIds.length > 0 ? modelIds : ["gpt-4o", "gpt-4o-mini"],
+      models: modelIds.length > 0 ? modelIds : ["gpt-4.1", "gpt-4.1-mini"],
     }
   } catch (err) {
     return {

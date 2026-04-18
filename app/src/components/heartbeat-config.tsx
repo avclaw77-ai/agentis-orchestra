@@ -52,12 +52,17 @@ const MODEL_COSTS: Record<string, { input: number; output: number }> = {
   "claude-cli:opus": { input: 0, output: 0 },
   "claude-cli:sonnet": { input: 0, output: 0 },
   "claude-cli:haiku": { input: 0, output: 0 },
-  "openai:gpt-4o": { input: 250, output: 1000 },
-  "openai:gpt-4o-mini": { input: 15, output: 60 },
+  "openai:gpt-4.1": { input: 200, output: 800 },
+  "openai:gpt-4.1-mini": { input: 40, output: 160 },
+  "openai:gpt-4.1-nano": { input: 10, output: 40 },
+  "openai:o4-mini": { input: 110, output: 440 },
+  "openai:o3": { input: 1000, output: 4000 },
   "perplexity:sonar-pro": { input: 300, output: 1500 },
   "perplexity:sonar": { input: 100, output: 100 },
   "openrouter:deepseek-v3": { input: 14, output: 28 },
   "openrouter:gemini-2.5-pro": { input: 125, output: 1000 },
+  "openrouter:llama-4-maverick": { input: 20, output: 60 },
+  "openrouter:qwen-3-235b": { input: 14, output: 28 },
 }
 
 function isCliModel(model: string): boolean {

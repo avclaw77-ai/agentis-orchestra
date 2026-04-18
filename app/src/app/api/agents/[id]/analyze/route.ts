@@ -35,8 +35,8 @@ Available models (pick the best fit):
 - "claude-cli:sonnet" -- Good balance of speed and quality (free via Pro)
 - "claude-cli:haiku" -- Fast, simple tasks (free via Pro)
 - "perplexity:sonar-pro" -- Best for research and web search tasks
-- "openai:gpt-4o" -- Strong general purpose
-- "openai:gpt-4o-mini" -- Fast, cost-effective
+- "openai:gpt-4.1" -- Strong general purpose
+- "openai:gpt-4.1-mini" -- Fast, cost-effective
 
 Rules:
 - Persona should be specific to the described role, not generic
@@ -69,7 +69,7 @@ Generate the configuration for this agent.`
           "X-Title": "AgentisOrchestra",
         },
         body: JSON.stringify({
-          model: "openai/gpt-4o-mini",
+          model: "openai/gpt-4.1-mini",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
@@ -96,7 +96,7 @@ Generate the configuration for this agent.`
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
+          model: "gpt-4.1-mini",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
