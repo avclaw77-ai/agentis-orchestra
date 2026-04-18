@@ -15,7 +15,7 @@
 <p align="center">
   <a href="https://github.com/AgentisLab/AgentisOrchestra/actions"><img src="https://img.shields.io/github/actions/workflow/status/AgentisLab/AgentisOrchestra/ci.yml?branch=main&style=flat-square&label=CI" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square" alt="License"></a>
-  <a href="https://github.com/AgentisLab/AgentisOrchestra/releases"><img src="https://img.shields.io/badge/version-0.4.0-0284C7?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/AgentisLab/AgentisOrchestra/releases"><img src="https://img.shields.io/badge/version-1.0.0-0284C7?style=flat-square" alt="Version"></a>
   <a href="https://orchestra.agentislab.ai"><img src="https://img.shields.io/badge/website-orchestra.agentislab.ai-0284C7?style=flat-square" alt="Website"></a>
 </p>
 

@@ -2,6 +2,63 @@
 
 All notable changes to AgentisOrchestra are documented here.
 
+## [1.0.0] -- 2026-04-18
+
+### Soul Engine -- Agents that get better over time
+- **Layer 1: Guided Soul Builder** -- 7-step interview builds agent personas through conversation, not prompt engineering. Structured, versioned output.
+- **Layer 2: Feedback-Driven Refinement** -- thumbs up/down on chat responses, optional daily/weekly pulse checks, automatic signal aggregation, persona change proposals through approval workflow
+- **Layer 3: Autonomous Self-Evaluation** -- agents reflect on performance after each heartbeat run (what worked, what was hard, what to change), feeds refinement engine
+- 5 new DB tables: agent_feedback, persona_versions, persona_proposals, agent_self_evaluations, feedback_preferences
+- 5 API routes, 5 UI components, bridge self-eval hook
+- Hard rule: all feedback always optional, dismissible in one click, auto-backoff on repeated dismissal
+
+### Model Governance
+- **Admin model controls** -- select which models are available to the organization
+- **Provider deduplication** -- models available via direct API key greyed out in OpenRouter
+- **Live model fetch** -- OpenAI shows all models from API key, not a hardcoded list
+- **GPT-5.4 family** -- GPT-5.4, GPT-5.4 Pro, GPT-5.4 Mini + o4-mini
+- **Subscription tier** -- Claude CLI labeled "SUB" (not "FREE"), separate Anthropic API models with per-token pricing
+- **Router respects config** -- never overrides a manually set agent model
+
+### Features
+- **Kanban drag-and-drop** -- @hello-pangea/dnd with grip handles and drop zone highlights
+- **Global search modal** -- Cmd+K searches agents, tasks, goals, routines, navigation
+- **Multi-conversation per agent** -- conversation sidebar with create/rename/delete
+- **Clipboard image paste** -- Ctrl+V captures images directly into chat
+- **Agent pause/resume** -- hover toggle on dashboard agent cards
+- **Task due dates** -- schema, create dialog, kanban cards (overdue in red), task detail
+- **Task dependencies** -- blocking/blocked-by badges with add/remove UI
+- **Task file attachments** -- upload, list, size display in task detail (10MB limit)
+- **Tool permissions per agent** -- checkbox grid in agent config (Read, Write, Edit, Bash, Grep, WebSearch, WebFetch)
+- **Edit/retry on chat messages** -- inline edit textarea, retry button on user messages
+- **Token count per message** -- usage display on assistant messages from SSE done events
+- **Live run view** -- modal with real-time status polling, token/cost/elapsed stats
+- **System logs** -- Settings > Logs tab with level/source filters, auto-refresh
+- **Loading skeletons** -- dashboard, kanban, chat skeleton components
+- **Onboarding checklist** -- first-run progress tracker on dashboard (dismissible)
+- **Pulse check** -- periodic agent rating card on dashboard (optional, auto-backoff)
+
+### Security
+- **Auth guards** on all 25 API routes (58 handlers) -- defense-in-depth with getSessionUser()
+- **Rate limiting** -- /api/setup/test-provider: 5 req/min per IP
+- **CSP headers** -- Content-Security-Policy + X-Frame-Options + nosniff on all responses
+- **ENCRYPTION_KEY validation** -- startup check with clear error messages
+- **Upload size limit** -- 10MB max on task attachments
+- **Conversation ownership** -- verify exists before PATCH/DELETE
+
+### Polish
+- **French i18n** -- 60+ new translation strings for all sprint features
+- **Help tooltips** -- title attributes on form labels (create task, agent config)
+- **Dashboard polling** -- reduced from 30s to 10s
+- **9 QA bugs fixed** -- edit/retry querySelector, live run URL, onboarding flash, task ID race, search globalIdx, bridge stream leak, NaN limit, conversation ownership
+
+### Infrastructure
+- **GitHub org repo** -- github.com/AgentisLab/AgentisOrchestra
+- **GitHub Actions CI** -- lint, typecheck, build (app + bridge), Docker build
+- **GitHub Pages** -- microsite deployed at orchestra.agentislab.ai
+- **GitHub Discussions** -- welcome + roadmap threads seeded
+- **v0.4.0 release** -- full release notes with 10 topics
+
 ## [0.4.0] -- 2026-04-17
 
 ### Added
