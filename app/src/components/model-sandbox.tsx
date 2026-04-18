@@ -22,9 +22,12 @@ interface SandboxResult {
 }
 
 const MODELS: ModelOption[] = [
-  { id: "claude-cli:opus", name: "Claude Opus 4.6", provider: "Claude CLI", costTier: "free", mode: "cli" },
-  { id: "claude-cli:sonnet", name: "Claude Sonnet 4.6", provider: "Claude CLI", costTier: "free", mode: "cli" },
-  { id: "claude-cli:haiku", name: "Claude Haiku 4.5", provider: "Claude CLI", costTier: "free", mode: "cli" },
+  { id: "claude-cli:opus", name: "Claude Opus 4.6 (CLI)", provider: "Claude CLI", costTier: "subscription", mode: "cli" },
+  { id: "claude-cli:sonnet", name: "Claude Sonnet 4.6 (CLI)", provider: "Claude CLI", costTier: "subscription", mode: "cli" },
+  { id: "claude-cli:haiku", name: "Claude Haiku 4.5 (CLI)", provider: "Claude CLI", costTier: "subscription", mode: "cli" },
+  { id: "anthropic:opus", name: "Claude Opus 4.6 (API)", provider: "Anthropic", costTier: "premium", mode: "api" },
+  { id: "anthropic:sonnet", name: "Claude Sonnet 4.6 (API)", provider: "Anthropic", costTier: "standard", mode: "api" },
+  { id: "anthropic:haiku", name: "Claude Haiku 4.5 (API)", provider: "Anthropic", costTier: "cheap", mode: "api" },
   { id: "perplexity:sonar-pro", name: "Sonar Pro", provider: "Perplexity", costTier: "standard", mode: "api" },
   { id: "perplexity:sonar", name: "Sonar", provider: "Perplexity", costTier: "cheap", mode: "api" },
   { id: "openai:gpt-4.1", name: "GPT-4.1", provider: "OpenAI", costTier: "standard", mode: "api" },
@@ -39,10 +42,17 @@ const MODELS: ModelOption[] = [
 ]
 
 const COST_BADGE: Record<string, string> = {
-  free: "bg-emerald-50 text-emerald-600",
+  subscription: "bg-violet-50 text-violet-600",
   cheap: "bg-sky-50 text-sky-600",
   standard: "bg-amber-50 text-amber-600",
   premium: "bg-red-50 text-red-500",
+}
+
+const COST_LABELS: Record<string, string> = {
+  subscription: "SUB",
+  cheap: "$",
+  standard: "$$",
+  premium: "$$$",
 }
 
 const PRESETS = [

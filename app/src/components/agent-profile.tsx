@@ -17,9 +17,12 @@ import type { Agent, AgentConfig, HeartbeatRun, Department } from "@/types"
 // ---------------------------------------------------------------------------
 
 const MODEL_OPTIONS = [
-  { id: "claude-cli:opus", name: "Claude Opus 4.6 (CLI)", costTier: "FREE" },
-  { id: "claude-cli:sonnet", name: "Claude Sonnet 4.6 (CLI)", costTier: "FREE" },
-  { id: "claude-cli:haiku", name: "Claude Haiku 4.5 (CLI)", costTier: "FREE" },
+  { id: "claude-cli:opus", name: "Claude Opus 4.6 (CLI)", costTier: "SUB" },
+  { id: "claude-cli:sonnet", name: "Claude Sonnet 4.6 (CLI)", costTier: "SUB" },
+  { id: "claude-cli:haiku", name: "Claude Haiku 4.5 (CLI)", costTier: "SUB" },
+  { id: "anthropic:opus", name: "Claude Opus 4.6 (API)", costTier: "$$$" },
+  { id: "anthropic:sonnet", name: "Claude Sonnet 4.6 (API)", costTier: "$$" },
+  { id: "anthropic:haiku", name: "Claude Haiku 4.5 (API)", costTier: "$" },
   { id: "perplexity:sonar-pro", name: "Perplexity Sonar Pro", costTier: "$$" },
   { id: "perplexity:sonar", name: "Perplexity Sonar", costTier: "$" },
   { id: "openai:gpt-4.1", name: "GPT-4.1", costTier: "$$" },
@@ -41,7 +44,7 @@ const ADAPTER_OPTIONS = [
 ]
 
 const COST_BADGE_STYLES: Record<string, string> = {
-  FREE: "bg-emerald-50 text-emerald-600",
+  SUB: "bg-violet-50 text-violet-600",
   $: "bg-sky-50 text-sky-600",
   $$: "bg-amber-50 text-amber-600",
   $$$: "bg-red-50 text-red-500",

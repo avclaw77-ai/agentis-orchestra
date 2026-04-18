@@ -13,7 +13,7 @@
 // =============================================================================
 
 export type Provider = "claude-cli" | "openrouter" | "perplexity" | "openai"
-export type CostTier = "free" | "cheap" | "standard" | "premium"
+export type CostTier = "subscription" | "cheap" | "standard" | "premium"
 export type TaskType =
   | "code"
   | "code-review"
@@ -45,19 +45,19 @@ export interface ModelDef {
 // =============================================================================
 
 export const MODEL_REGISTRY: ModelDef[] = [
-  // --- Claude CLI (Pro subscription -- flat cost, no per-token billing) ---
+  // --- Claude CLI (Pro subscription -- flat monthly, included in sub) ---
   {
     id: "claude-cli:opus",
     provider: "claude-cli",
     model: "claude-opus-4-6",
     name: "Claude Opus 4.6 (CLI)",
     strengths: ["code", "orchestration", "analysis", "writing", "vision"],
-    costTier: "free",
+    costTier: "subscription",
     mode: "cli",
     contextWindow: 200_000,
     supportsVision: true,
     supportsTools: true,
-    notes: "Most capable. Free via Pro sub. Primary workhorse.",
+    notes: "Most capable. Included in Pro subscription.",
   },
   {
     id: "claude-cli:sonnet",
@@ -65,12 +65,12 @@ export const MODEL_REGISTRY: ModelDef[] = [
     model: "claude-sonnet-4-6",
     name: "Claude Sonnet 4.6 (CLI)",
     strengths: ["code", "code-review", "analysis", "conversation"],
-    costTier: "free",
+    costTier: "subscription",
     mode: "cli",
     contextWindow: 200_000,
     supportsVision: true,
     supportsTools: true,
-    notes: "Great balance. Free via Pro sub. Fast.",
+    notes: "Great balance. Included in Pro subscription.",
   },
   {
     id: "claude-cli:haiku",
@@ -78,12 +78,53 @@ export const MODEL_REGISTRY: ModelDef[] = [
     model: "claude-haiku-4-5",
     name: "Claude Haiku 4.5 (CLI)",
     strengths: ["quick", "conversation", "code-review", "monitoring"],
-    costTier: "free",
+    costTier: "subscription",
     mode: "cli",
     contextWindow: 200_000,
     supportsVision: true,
     supportsTools: true,
-    notes: "Fastest. Free via Pro sub. Good for triage.",
+    notes: "Fastest. Included in Pro subscription.",
+  },
+
+  // --- Claude API (per-token, via Anthropic API key) ---
+  {
+    id: "anthropic:opus",
+    provider: "claude-cli",
+    model: "claude-opus-4-6",
+    name: "Claude Opus 4.6 (API)",
+    strengths: ["code", "orchestration", "analysis", "writing", "vision"],
+    costTier: "premium",
+    mode: "api",
+    contextWindow: 200_000,
+    supportsVision: true,
+    supportsTools: true,
+    notes: "Most capable. Per-token via Anthropic API.",
+  },
+  {
+    id: "anthropic:sonnet",
+    provider: "claude-cli",
+    model: "claude-sonnet-4-6",
+    name: "Claude Sonnet 4.6 (API)",
+    strengths: ["code", "code-review", "analysis", "conversation"],
+    costTier: "standard",
+    mode: "api",
+    contextWindow: 200_000,
+    supportsVision: true,
+    supportsTools: true,
+    notes: "Great balance. Per-token via Anthropic API.",
+  },
+  {
+    id: "anthropic:haiku",
+    provider: "claude-cli",
+    model: "claude-haiku-4-5",
+    name: "Claude Haiku 4.5 (API)",
+    strengths: ["quick", "conversation", "code-review", "monitoring"],
+    costTier: "cheap",
+    mode: "api",
+    contextWindow: 200_000,
+    supportsVision: true,
+    supportsTools: true,
+    notes: "Fastest and cheapest Claude. Per-token via Anthropic API.",
   },
 
   // --- Perplexity (Research-focused) ---
@@ -252,10 +293,10 @@ export function getModelsByStrength(task: TaskType): ModelDef[] {
   return MODEL_REGISTRY.filter((m) => m.strengths.includes(task))
 }
 
-export function getFreeModels(): ModelDef[] {
-  return MODEL_REGISTRY.filter((m) => m.costTier === "free")
+export function getSubscriptionModels(): ModelDef[] {
+  return MODEL_REGISTRY.filter((m) => m.costTier === "subscription")
 }
 
 export function getCheapModels(): ModelDef[] {
-  return MODEL_REGISTRY.filter((m) => m.costTier === "free" || m.costTier === "cheap")
+  return MODEL_REGISTRY.filter((m) => m.costTier === "subscription" || m.costTier === "cheap")
 }

@@ -14,7 +14,7 @@
 import {
   MODEL_REGISTRY,
   getModelsByStrength,
-  getFreeModels,
+  getSubscriptionModels,
   type ModelDef,
   type TaskType,
   type Provider,
@@ -62,7 +62,7 @@ function availableProviders(): Set<Provider> {
   return providers
 }
 
-const COST_ORDER: CostTier[] = ["free", "cheap", "standard", "premium"]
+const COST_ORDER: CostTier[] = ["subscription", "cheap", "standard", "premium"]
 
 function costRank(tier: CostTier): number {
   return COST_ORDER.indexOf(tier)

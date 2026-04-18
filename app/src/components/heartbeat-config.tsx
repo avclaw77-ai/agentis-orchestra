@@ -49,9 +49,14 @@ const TOKENS_PER_RUN: Record<string, { input: number; output: number; label: str
 
 /** Cost per 1M tokens in cents */
 const MODEL_COSTS: Record<string, { input: number; output: number }> = {
+  // CLI = subscription (included in Pro, no per-token cost)
   "claude-cli:opus": { input: 0, output: 0 },
   "claude-cli:sonnet": { input: 0, output: 0 },
   "claude-cli:haiku": { input: 0, output: 0 },
+  // Anthropic API = per-token
+  "anthropic:opus": { input: 1500, output: 7500 },
+  "anthropic:sonnet": { input: 300, output: 1500 },
+  "anthropic:haiku": { input: 80, output: 400 },
   "openai:gpt-4.1": { input: 200, output: 800 },
   "openai:gpt-4.1-mini": { input: 40, output: 160 },
   "openai:gpt-4.1-nano": { input: 10, output: 40 },
