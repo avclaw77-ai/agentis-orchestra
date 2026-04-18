@@ -25,6 +25,7 @@ import { ConnectorLibrary } from "@/components/connector-library"
 import { FileBrowser } from "@/components/file-browser"
 import { ModelSandbox } from "@/components/model-sandbox"
 import { ProviderKeys } from "@/components/provider-keys"
+import { ModelGovernance } from "@/components/model-governance"
 import { SearchModal } from "@/components/search-modal"
 import { ConversationList } from "@/components/conversation-list"
 import { OnboardingChecklist } from "@/components/onboarding-checklist"
@@ -98,7 +99,7 @@ export default function DashboardPage() {
 
   // Settings sub-tab
   const [settingsTab, setSettingsTab] = useState<"general" | "team" | "connectors" | "approvals" | "skills" | "decisions" | "activity" | "logs" | "export">("general")
-  const [modelsTab, setModelsTab] = useState<"config" | "sandbox" | "keys">("config")
+  const [modelsTab, setModelsTab] = useState<"governance" | "config" | "sandbox" | "keys">("governance")
 
   // Company general form state
   const [companyName, setCompanyName] = useState("")
@@ -1136,12 +1137,20 @@ export default function DashboardPage() {
         <div className="p-6 max-w-5xl">
           <div className="flex gap-2 mb-6">
             <button
+              onClick={() => setModelsTab("governance")}
+              className={cn("px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+                modelsTab === "governance" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Governance
+            </button>
+            <button
               onClick={() => setModelsTab("config")}
               className={cn("px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
                 modelsTab === "config" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
               )}
             >
-              Configuration
+              Router
             </button>
             <button
               onClick={() => setModelsTab("sandbox")}
@@ -1160,6 +1169,7 @@ export default function DashboardPage() {
               API Keys
             </button>
           </div>
+          {modelsTab === "governance" && <ModelGovernance />}
           {modelsTab === "config" && <ModelConfig />}
           {modelsTab === "sandbox" && <ModelSandbox />}
           {modelsTab === "keys" && <ProviderKeys />}
