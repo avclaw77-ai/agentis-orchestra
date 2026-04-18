@@ -225,6 +225,21 @@ persona_proposals (
 
 ---
 
+## Hard Rule: Always Optional, Never Annoying
+
+Every feedback touchpoint MUST follow these principles:
+
+1. **Dismissible in one click.** No confirmation dialogs. No "are you sure you want to skip?" guilt trips.
+2. **Never blocks workflow.** Feedback prompts appear as passive cards or inline elements. Never as modals, never interrupting active work.
+3. **Frequency respects the user.** If a user dismisses 3 daily pulses in a row, stop showing them. Surface weekly instead. If they dismiss weekly, go monthly. If monthly, stop entirely until they opt back in via Settings.
+4. **Zero feedback = zero penalty.** The system works fine without any user input. Automatic signals (run outcomes, token patterns, tool usage) drive refinement even if the user never clicks a single thumbs up.
+5. **No notification spam.** Feedback prompts never generate push notifications, emails, or badges. They appear only when the user is already looking at the relevant screen.
+6. **Configurable per user.** Settings > Preferences: "Agent feedback frequency" with options: Active / Light / Off. Default: Light.
+
+The goal is that users who want to shape their agents can, and users who just want to work are never bothered. If anyone ever describes the feedback system as "annoying," we failed.
+
+---
+
 ## Open Questions
 
 1. Should persona proposals go through the existing Approvals workflow or a dedicated "Soul Review" interface?
