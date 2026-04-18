@@ -78,6 +78,7 @@ export async function PATCH(
     "reportsTo",
     "connectionConfig",
     "budget",
+    "toolPermissions",
   ] as const
 
   // Build update payload
@@ -101,6 +102,7 @@ export async function PATCH(
   if ("reportsTo" in updates) drizzleUpdates.reportsTo = updates.reportsTo
   if ("connectionConfig" in updates) drizzleUpdates.connectionConfig = updates.connectionConfig
   if ("budget" in updates) drizzleUpdates.budget = updates.budget
+  if ("toolPermissions" in updates) drizzleUpdates.toolPermissions = updates.toolPermissions
   drizzleUpdates.updatedAt = new Date()
 
   let resultConfig

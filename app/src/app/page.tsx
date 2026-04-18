@@ -379,6 +379,7 @@ export default function DashboardPage() {
     priority: string
     phase: string | null
     dueDate: string | null
+    dependencies: string[] | null
     notes: string
   }) {
     try {
@@ -426,6 +427,24 @@ export default function DashboardPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ notes }),
     })
+    await fetchTasks()
+  }
+
+  async function handleDependenciesChange(dependencies: string[]) {
+    if (!selectedTaskId) return
+    await fetch(`/api/tasks/${selectedTaskId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ dependencies }),
+    })
+    // Refresh task detail
+    const res = await fetch(`/api/tasks/${selectedTaskId}`)
+    if (res.ok) {
+      const data = await res.json()
+      const { comments, ...task } = data
+      setSelectedTask(task)
+      setTaskComments(comments || [])
+    }
     await fetchTasks()
   }
 
@@ -1044,6 +1063,7 @@ export default function DashboardPage() {
               }
               onAddComment={handleAddComment}
               onNotesChange={handleNotesChange}
+              onDependenciesChange={handleDependenciesChange}
             />
           )}
 

@@ -56,6 +56,7 @@ export async function POST(req: NextRequest) {
     notes,
     parentTaskId,
     estimatedTokens,
+    dependencies,
   } = body
 
   if (!title) {
@@ -96,6 +97,7 @@ export async function POST(req: NextRequest) {
     dueDate: dueDate ? new Date(dueDate) : null,
     parentTaskId: parentTaskId || null,
     estimatedTokens: estimatedTokens || null,
+    dependencies: Array.isArray(dependencies) ? dependencies : null,
     createdAt: now,
     updatedAt: now,
   })
@@ -119,7 +121,7 @@ export async function PATCH(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
 
   const body = await req.json()
-  const { id, title, status, assignedTo, priority, phase, notes, project } = body
+  const { id, title, status, assignedTo, priority, phase, notes, project, dependencies } = body
 
   if (!id) {
     return NextResponse.json({ error: "id is required" }, { status: 400 })
@@ -139,6 +141,7 @@ export async function PATCH(req: NextRequest) {
   if (phase !== undefined) updates.phase = phase
   if (notes !== undefined) updates.notes = notes
   if (project !== undefined) updates.project = project
+  if (dependencies !== undefined) updates.dependencies = Array.isArray(dependencies) ? dependencies : null
 
   await db.update(tasks).set(updates).where(eq(tasks.id, id))
 

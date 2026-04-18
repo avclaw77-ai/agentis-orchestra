@@ -135,6 +135,7 @@ export interface AgentConfig {
   reportsTo: string | null
   connectionConfig: string | null
   budget: number | null
+  toolPermissions: string[] | null
   isActive: boolean
 }
 
@@ -169,6 +170,7 @@ export interface Task {
   estimatedTokens: number | null
   actualTokens: number
   goalId: string | null
+  dependencies: string[] | null
   dueDate: string | null
   createdAt: string
   updatedAt: string
@@ -182,6 +184,17 @@ export interface TaskComment {
   authorUserId: string | null
   body: string
   runId: string | null
+  createdAt: string
+}
+
+export interface TaskAttachment {
+  id: number
+  taskId: string
+  filename: string
+  path: string
+  size: number
+  mimeType: string | null
+  uploadedBy: string | null
   createdAt: string
 }
 

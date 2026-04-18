@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
-import { X, Lock, Play, CheckCircle2, Send } from "lucide-react"
-import type { Task, TaskComment, Agent, TaskStatus } from "@/types"
+import { X, Lock, Play, CheckCircle2, Send, Plus, Link, Paperclip, Upload } from "lucide-react"
+import type { Task, TaskComment, TaskAttachment, Agent, TaskStatus } from "@/types"
 
 const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
   { value: "backlog", label: "Backlog" },
@@ -29,6 +29,7 @@ interface TaskDetailProps {
   onStatusChange: (status: TaskStatus) => void
   onAddComment: (body: string) => void
   onNotesChange?: (notes: string) => void
+  onDependenciesChange?: (dependencies: string[]) => void
 }
 
 export function TaskDetail({
@@ -39,17 +40,85 @@ export function TaskDetail({
   onStatusChange,
   onAddComment,
   onNotesChange,
+  onDependenciesChange,
 }: TaskDetailProps) {
   const [commentText, setCommentText] = useState("")
   const [editingNotes, setEditingNotes] = useState(false)
   const [notesValue, setNotesValue] = useState(task.notes || "")
+  const [depInput, setDepInput] = useState("")
+  const [attachments, setAttachments] = useState<TaskAttachment[]>([])
+  const [uploadingFile, setUploadingFile] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const agent = agents.find((a) => a.id === task.assignedTo)
+
+  // Fetch attachments on mount
+  useEffect(() => {
+    async function loadAttachments() {
+      try {
+        const res = await fetch(`/api/tasks/${task.id}/attachments`)
+        if (res.ok) {
+          setAttachments(await res.json())
+        }
+      } catch {
+        // Attachments will load once available
+      }
+    }
+    loadAttachments()
+  }, [task.id])
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingFile(true)
+    try {
+      const reader = new FileReader()
+      reader.onload = async () => {
+        const base64 = (reader.result as string).split(",")[1]
+        const res = await fetch(`/api/tasks/${task.id}/attachments`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filename: file.name,
+            content: base64,
+            mimeType: file.type,
+            size: file.size,
+          }),
+        })
+        if (res.ok) {
+          const attachment = await res.json()
+          setAttachments((prev) => [...prev, attachment])
+        }
+        setUploadingFile(false)
+      }
+      reader.readAsDataURL(file)
+    } catch {
+      setUploadingFile(false)
+    }
+    // Reset input so same file can be re-uploaded
+    if (fileInputRef.current) fileInputRef.current.value = ""
+  }
 
   function handleSendComment() {
     if (!commentText.trim()) return
     onAddComment(commentText.trim())
     setCommentText("")
+  }
+
+  function handleAddDep() {
+    const id = depInput.trim().toUpperCase()
+    if (!id) return
+    const current = task.dependencies || []
+    if (current.includes(id)) { setDepInput(""); return }
+    const updated = [...current, id]
+    onDependenciesChange?.(updated)
+    setDepInput("")
+  }
+
+  function handleRemoveDep(depId: string) {
+    const current = task.dependencies || []
+    const updated = current.filter((d) => d !== depId)
+    onDependenciesChange?.(updated)
   }
 
   function handleSaveNotes() {
@@ -177,6 +246,62 @@ export function TaskDetail({
               )}
             </div>
 
+            {/* Dependencies */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                <Link size={12} />
+                Dependencies
+              </label>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {(!task.dependencies || task.dependencies.length === 0) && (
+                  <p className="text-sm text-muted-foreground">No dependencies</p>
+                )}
+                {task.dependencies?.map((depId) => (
+                  <span
+                    key={depId}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-secondary text-xs font-mono font-medium"
+                  >
+                    <span className="text-muted-foreground">blocked by</span>
+                    {depId}
+                    <button
+                      onClick={() => handleRemoveDep(depId)}
+                      className="ml-0.5 text-muted-foreground hover:text-foreground"
+                    >
+                      <X size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="mt-2 flex gap-2">
+                <input
+                  type="text"
+                  value={depInput}
+                  onChange={(e) => setDepInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault()
+                      handleAddDep()
+                    }
+                  }}
+                  placeholder="TASK-001"
+                  className="flex-1 bg-inset rounded-lg px-3 py-1.5 text-sm outline-none border border-border font-mono"
+                />
+                <button
+                  onClick={handleAddDep}
+                  disabled={!depInput.trim()}
+                  className={cn(
+                    "flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                    depInput.trim()
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                      : "bg-secondary text-muted-foreground cursor-not-allowed"
+                  )}
+                >
+                  <Plus size={14} />
+                  Add
+                </button>
+              </div>
+            </div>
+
             {/* Notes */}
             <div>
               <div className="flex items-center justify-between">
@@ -223,6 +348,62 @@ export function TaskDetail({
                   {task.notes || "No notes"}
                 </p>
               )}
+            </div>
+
+            {/* Attachments */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                <Paperclip size={12} />
+                Attachments
+              </label>
+              <div className="mt-2 space-y-1.5">
+                {attachments.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No attachments</p>
+                )}
+                {attachments.map((att) => (
+                  <div
+                    key={att.id}
+                    className="flex items-center justify-between px-3 py-2 rounded-lg bg-inset border border-border text-sm"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Paperclip size={14} className="text-muted-foreground shrink-0" />
+                      <span className="truncate font-medium">{att.filename}</span>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {att.size >= 1024 * 1024
+                          ? `${(att.size / (1024 * 1024)).toFixed(1)} MB`
+                          : att.size >= 1024
+                            ? `${(att.size / 1024).toFixed(1)} KB`
+                            : `${att.size} B`}
+                      </span>
+                    </div>
+                    <a
+                      href={`/api/tasks/${task.id}/attachments?file=${encodeURIComponent(att.path)}`}
+                      download={att.filename}
+                      className="text-xs text-primary hover:underline shrink-0 ml-2"
+                    >
+                      Download
+                    </a>
+                  </div>
+                ))}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingFile}
+                className={cn(
+                  "mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                  "bg-secondary text-foreground hover:bg-secondary/80",
+                  uploadingFile && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <Upload size={14} />
+                {uploadingFile ? "Uploading..." : "Upload File"}
+              </button>
             </div>
 
             {/* Action buttons */}

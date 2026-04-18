@@ -25,8 +25,9 @@
  *  11. projects              -- Project groupings
  *  12. tasks                 -- Kanban task board items
  *  13. taskComments          -- Discussion on tasks
- *  14. labels                -- Task categorization labels
- *  15. taskLabels            -- Task-to-label join table
+ *  14. taskAttachments       -- File attachments on tasks
+ *  15. labels                -- Task categorization labels
+ *  16. taskLabels            -- Task-to-label join table
  *
  *  CHAT
  *  16. chatMessages          -- Agent conversation history
@@ -210,6 +211,7 @@ export const agentConfigs = pgTable(
     reportsTo: text("reports_to"), // agent hierarchy
     connectionConfig: text("connection_config"), // encrypted JSON for system connector agents (API URLs, credentials)
     budget: integer("budget"), // monthly cents cap
+    toolPermissions: text("tool_permissions").array(),
     isActive: boolean("is_active").default(true),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -356,6 +358,25 @@ export const taskComments = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => [index("task_comments_task_created_idx").on(t.taskId, t.createdAt)]
+)
+
+// =============================================================================
+// TASK ATTACHMENTS -- File attachments on tasks
+// =============================================================================
+
+export const taskAttachments = pgTable(
+  "task_attachments",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    taskId: text("task_id").notNull().references(() => tasks.id, { onDelete: "cascade" }),
+    filename: text("filename").notNull(),
+    path: text("path").notNull(),
+    size: integer("size").default(0),
+    mimeType: text("mime_type"),
+    uploadedBy: text("uploaded_by"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [index("task_attachments_task_idx").on(t.taskId)]
 )
 
 // =============================================================================

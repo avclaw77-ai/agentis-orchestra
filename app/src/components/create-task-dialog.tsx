@@ -22,6 +22,7 @@ interface CreateTaskPayload {
   priority: string
   phase: string | null
   dueDate: string | null
+  dependencies: string[] | null
   notes: string
 }
 
@@ -48,6 +49,7 @@ export function CreateTaskDialog({
   const [priority, setPriority] = useState("medium")
   const [phase, setPhase] = useState<string | null>(null)
   const [dueDate, setDueDate] = useState("")
+  const [dependenciesText, setDependenciesText] = useState("")
   const [notes, setNotes] = useState("")
 
   const filteredAgents = departmentId
@@ -58,6 +60,9 @@ export function CreateTaskDialog({
 
   function handleCreate() {
     if (!title.trim()) return
+    const deps = dependenciesText.trim()
+      ? dependenciesText.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean)
+      : null
     onCreate({
       title: title.trim(),
       departmentId,
@@ -65,6 +70,7 @@ export function CreateTaskDialog({
       priority,
       phase,
       dueDate: dueDate || null,
+      dependencies: deps,
       notes,
     })
   }
@@ -196,6 +202,21 @@ export function CreateTaskDialog({
                 onChange={(e) => setDueDate(e.target.value)}
                 className="mt-1 w-full bg-inset rounded-lg px-3 py-2 text-sm outline-none border border-border"
               />
+            </div>
+
+            {/* Dependencies */}
+            <div>
+              <label className="text-sm font-medium">Dependencies</label>
+              <input
+                type="text"
+                value={dependenciesText}
+                onChange={(e) => setDependenciesText(e.target.value)}
+                placeholder="TASK-001, TASK-002"
+                className="mt-1 w-full bg-inset rounded-lg px-3 py-2 text-sm outline-none border border-border font-mono"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Comma-separated task IDs this task is blocked by
+              </p>
             </div>
 
             {/* Notes */}

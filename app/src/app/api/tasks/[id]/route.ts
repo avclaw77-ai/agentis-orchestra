@@ -44,7 +44,7 @@ export async function PATCH(
     return NextResponse.json({ error: "task not found" }, { status: 404 })
   }
 
-  const { title, status, assignedTo, priority, phase, notes, project } = body
+  const { title, status, assignedTo, priority, phase, notes, project, dependencies } = body
   const updates: Record<string, unknown> = { updatedAt: new Date() }
   if (title !== undefined) updates.title = title
   if (status !== undefined) updates.status = status
@@ -53,6 +53,7 @@ export async function PATCH(
   if (phase !== undefined) updates.phase = phase
   if (notes !== undefined) updates.notes = notes
   if (project !== undefined) updates.project = project
+  if (dependencies !== undefined) updates.dependencies = Array.isArray(dependencies) ? dependencies : null
 
   await db.update(tasks).set(updates).where(eq(tasks.id, id))
 

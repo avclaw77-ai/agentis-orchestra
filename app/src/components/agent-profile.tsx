@@ -80,6 +80,7 @@ export function AgentProfile({
   const [newDataSource, setNewDataSource] = useState("")
   const [reportsTo, setReportsTo] = useState(config?.reportsTo || "")
   const [budget, setBudget] = useState(config?.budget ? (config.budget / 100).toString() : "")
+  const [toolPermissions, setToolPermissions] = useState<string[]>(config?.toolPermissions || [])
   const [saving, setSaving] = useState(false)
 
   // AI configure state
@@ -124,6 +125,7 @@ export function AgentProfile({
     setDataSources(config?.dataSources || [])
     setReportsTo(config?.reportsTo || "")
     setBudget(config?.budget ? (config.budget / 100).toString() : "")
+    setToolPermissions(config?.toolPermissions || [])
   }, [config])
 
   // Fetch runs when switching to runs tab
@@ -224,6 +226,7 @@ export function AgentProfile({
       dataSources,
       reportsTo: reportsTo || null,
       budget: budgetCents,
+      toolPermissions: toolPermissions.length > 0 ? toolPermissions : null,
     })
     setSaving(false)
   }
@@ -626,6 +629,36 @@ export function AgentProfile({
                     className="w-full bg-inset rounded-lg pl-7 pr-3 py-2 text-sm outline-none tabular-nums"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">/month</span>
+                </div>
+              </div>
+
+              {/* Tool Permissions */}
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Tool Permissions</label>
+                <p className="text-[11px] text-muted-foreground mt-0.5 mb-2">
+                  Select which tools this agent is allowed to use
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {["Read", "Write", "Edit", "Bash", "Grep", "WebSearch", "WebFetch"].map((tool) => (
+                    <label
+                      key={tool}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-inset cursor-pointer hover:bg-secondary transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={toolPermissions.includes(tool)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setToolPermissions((prev) => [...prev, tool])
+                          } else {
+                            setToolPermissions((prev) => prev.filter((t) => t !== tool))
+                          }
+                        }}
+                        className="rounded border-border"
+                      />
+                      <span className="text-sm font-medium">{tool}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
 
