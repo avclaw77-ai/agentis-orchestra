@@ -544,7 +544,7 @@ export function RoutineBuilder({
                           <option value="">Model: Auto</option>
                           <option value="claude-sonnet-4-6">Claude Sonnet</option>
                           <option value="claude-opus-4-6">Claude Opus</option>
-                          <option value="gpt-4.1">GPT-4o</option>
+                          <option value="gpt-5.4">GPT-4o</option>
                           <option value="perplexity-sonar-pro">Perplexity Sonar Pro</option>
                         </select>
 

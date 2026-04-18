@@ -63,8 +63,8 @@ const MODEL_OPTIONS = [
   { id: "claude-cli:haiku", name: "Claude Haiku (CLI)", costTier: "free" },
   { id: "perplexity:sonar-pro", name: "Perplexity Sonar Pro", costTier: "standard" },
   { id: "perplexity:sonar", name: "Perplexity Sonar", costTier: "cheap" },
-  { id: "openai:gpt-4.1", name: "GPT-4.1", costTier: "standard" },
-  { id: "openai:gpt-4.1-mini", name: "GPT-4.1 Mini", costTier: "cheap" },
+  { id: "openai:gpt-5.4", name: "GPT-5.4", costTier: "standard" },
+  { id: "openai:gpt-5.4-mini", name: "GPT-5.4 Mini", costTier: "cheap" },
   { id: "openrouter:deepseek-v3", name: "DeepSeek V3", costTier: "cheap" },
   { id: "openrouter:gemini-2.5-pro", name: "Gemini 2.5 Pro", costTier: "standard" },
 ]
