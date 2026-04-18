@@ -33,6 +33,7 @@ export interface RouteRequest {
   needsSearch?: boolean        // web search = Perplexity
   maxCostTier?: CostTier       // budget cap
   preferCLI?: boolean          // default true -- use Pro sub when possible
+  allowedModelIds?: string[]   // org-level governance filter (empty = all allowed)
 }
 
 export interface RouteResult {
@@ -117,6 +118,11 @@ export function routeModel(req: RouteRequest): RouteResult {
 
   // Filter by available providers
   candidates = candidates.filter((m) => providers.has(m.provider))
+
+  // Filter by org-level model governance (if configured)
+  if (req.allowedModelIds && req.allowedModelIds.length > 0) {
+    candidates = candidates.filter((m) => req.allowedModelIds!.includes(m.id))
+  }
 
   // Filter by vision/tools requirements
   if (req.needsVision) {

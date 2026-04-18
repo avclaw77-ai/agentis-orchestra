@@ -155,14 +155,28 @@ export function SoulBuilder({
     )
   }
 
+  function structuredToText(p: ReturnType<typeof buildPersona>): string {
+    const lines: string[] = []
+    lines.push(`## Role\n${p.role}`)
+    if (p.priorities.length) lines.push(`\n## Priorities\n${p.priorities.map((pr) => `- ${pr}`).join("\n")}`)
+    if (p.guardrails.length) lines.push(`\n## Guardrails\n${p.guardrails.map((g) => `- ${g}`).join("\n")}`)
+    if (p.tone) lines.push(`\n## Tone\n${p.tone}`)
+    if (p.tools.length) lines.push(`\n## Tools\n${p.tools.join(", ")}`)
+    if (p.hierarchy.reportsTo) lines.push(`\n## Reports To\n${p.hierarchy.reportsTo}`)
+    if (p.context) lines.push(`\n## Context\n${p.context}`)
+    return lines.join("\n")
+  }
+
   async function handleSave() {
     setSaving(true)
     try {
       const persona = buildPersona()
+      const personaText = structuredToText(persona)
       const res = await fetch(`/api/agents/${agentId}/persona`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          personaText,
           structuredPersona: persona,
           changeSource: "soul_builder",
           changeSummary: `Soul Builder: configured role, ${priorities.length} priorities, ${guardrails.length} guardrails, ${tools.length} tools`,

@@ -30,6 +30,7 @@ export interface ProviderRequest {
   maxTurns?: number        // limit tool-use rounds (default: 5)
   timeoutMs?: number       // kill after N ms (default: 120000)
   verbose?: boolean        // include verbose output (default: false)
+  allowedTools?: string[]  // restrict which tools the agent can use
 }
 
 export interface TokenUsage {
@@ -67,6 +68,10 @@ export async function executeCLI(
 
   if (req.systemPrompt) {
     args.push("--system-prompt", req.systemPrompt)
+  }
+
+  if (req.allowedTools && req.allowedTools.length > 0) {
+    args.push("--allowedTools", req.allowedTools.join(","))
   }
 
   return new Promise((resolve, reject) => {

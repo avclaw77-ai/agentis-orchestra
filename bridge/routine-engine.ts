@@ -265,6 +265,7 @@ class RoutineEngine {
         prompt,
         undefined, // departmentId
         undefined, // conversationId
+        undefined, // modelOverride
         {
           onComplete: (result: string) => {
             clearTimeout(timeout)

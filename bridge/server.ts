@@ -566,7 +566,7 @@ const server = http.createServer((req, res) => {
   let body = ""
   req.on("data", (chunk) => (body += chunk))
   req.on("end", async () => {
-    let parsed: { channel: string; message: string; departmentId?: string; conversationId?: string }
+    let parsed: { channel: string; message: string; departmentId?: string; conversationId?: string; modelOverride?: string }
     try {
       parsed = JSON.parse(body)
     } catch {
@@ -575,7 +575,7 @@ const server = http.createServer((req, res) => {
       return
     }
 
-    const { channel, message, departmentId, conversationId } = parsed
+    const { channel, message, departmentId, conversationId, modelOverride } = parsed
 
     if (!channel || !message) {
       res.writeHead(400, { "Content-Type": "application/json" })
@@ -616,7 +616,8 @@ const server = http.createServer((req, res) => {
         channel,
         message,
         departmentId || undefined,
-        conversationId || undefined, // stored on messages for multi-conversation
+        conversationId || undefined,
+        modelOverride || undefined,
         {
           onToken: (token: string) => {
             if (!cancelled) send("token", { token })

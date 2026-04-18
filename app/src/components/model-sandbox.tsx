@@ -101,7 +101,7 @@ export function ModelSandbox() {
     try {
       abortRef.current = new AbortController()
 
-      // For CLI models, use the chat endpoint via a temporary agent channel
+      // Send to chat endpoint with model override for sandbox testing
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -109,6 +109,7 @@ export function ModelSandbox() {
           channel: "sandbox",
           message: prompt.trim(),
           departmentId: null,
+          modelOverride: selectedModel,
         }),
         signal: abortRef.current.signal,
       })

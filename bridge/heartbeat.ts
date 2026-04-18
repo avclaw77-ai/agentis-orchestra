@@ -190,19 +190,33 @@ class HeartbeatEngine {
       const isChat = wakeup.source === "chat"
       const defaultTaskType = isChat ? "conversation" : "monitoring"
 
-      // Fetch agent's configured model from DB (always respect manual config)
+      // Fetch agent's config from DB (model, tool permissions, persona)
       let agentConfigModel = (wakeup.payload?.agentModel as string) || undefined
-      if (!agentConfigModel) {
-        try {
-          const { _sql } = await import("./db.js")
-          const sql = _sql()
-          if (sql) {
-            const [cfg] = await sql`SELECT model FROM agent_configs WHERE agent_id = ${agentId} LIMIT 1`
-            if (cfg?.model) agentConfigModel = cfg.model as string
+      let agentToolPermissions: string[] | null = null
+      let agentPersona: string | null = null
+      let orgAllowedModels: string[] | undefined = undefined
+      try {
+        const { _sql } = await import("./db.js")
+        const sql = _sql()
+        if (sql) {
+          const [cfg] = await sql`SELECT model, tool_permissions, persona FROM agent_configs WHERE agent_id = ${agentId} LIMIT 1`
+          if (cfg) {
+            if (!agentConfigModel && cfg.model) agentConfigModel = cfg.model as string
+            if (cfg.tool_permissions) agentToolPermissions = cfg.tool_permissions as string[]
+            if (cfg.persona) agentPersona = cfg.persona as string
           }
-        } catch {
-          // fallback to router default
+          // Load org-level model governance
+          const [co] = await sql`SELECT settings FROM company WHERE id = 'default' LIMIT 1`
+          if (co?.settings) {
+            const settings = co.settings as Record<string, unknown>
+            const allowed = settings.allowedModels as Array<{ id: string }> | undefined
+            if (allowed && allowed.length > 0) {
+              orgAllowedModels = allowed.map((m) => m.id)
+            }
+          }
         }
+      } catch {
+        // fallback to defaults
       }
 
       const routeReq: RouteRequest = {
@@ -212,6 +226,7 @@ class HeartbeatEngine {
         needsVision: !!wakeup.payload?.needsVision,
         needsTools: true,
         preferCLI: true,
+        allowedModelIds: orgAllowedModels,
       }
 
       const route = routeModel(routeReq)
@@ -248,7 +263,7 @@ class HeartbeatEngine {
         },
       }
 
-      const systemPrompt = (context.persona as string) || undefined
+      const systemPrompt = agentPersona || (context.persona as string) || undefined
       const abortController = new AbortController()
 
       // Chat: more turns, verbose. Heartbeat: fewer turns, quiet.
@@ -264,7 +279,8 @@ class HeartbeatEngine {
           signal: abortController.signal,
           maxTurns,
           timeoutMs,
-          verbose: isChat, // only verbose for user-facing chat
+          verbose: isChat,
+          allowedTools: agentToolPermissions || undefined,
         },
         callbacks
       )
@@ -419,6 +435,7 @@ class HeartbeatEngine {
     message: string,
     departmentId?: string,
     conversationId?: string,
+    modelOverride?: string,
     callbacks?: {
       onToken?: (token: string) => void
       onToolUse?: (tool: string, input: unknown) => void
@@ -442,14 +459,18 @@ class HeartbeatEngine {
       content: message,
     })
 
-    // Create wakeup request
+    // Create wakeup request (modelOverride passed via payload for the router)
     await db.createWakeupRequest({
       id: wakeupId,
       departmentId: departmentId ?? null,
       agentId,
       source: "chat",
       reason: message,
-      payload: { prompt: message, conversationId: conversationId ?? null },
+      payload: {
+        prompt: message,
+        conversationId: conversationId ?? null,
+        agentModel: modelOverride ?? null,
+      },
     })
 
     // Pre-create the run
