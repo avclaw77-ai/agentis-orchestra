@@ -28,6 +28,7 @@ import { ProviderKeys } from "@/components/provider-keys"
 import { SearchModal } from "@/components/search-modal"
 import { ConversationList } from "@/components/conversation-list"
 import { OnboardingChecklist } from "@/components/onboarding-checklist"
+import { PulseCheck } from "@/components/pulse-check"
 import { SystemLogs } from "@/components/system-logs"
 import { DashboardSkeleton, KanbanSkeleton, ChatSkeleton } from "@/components/loading-skeleton"
 import type {
@@ -943,6 +944,10 @@ export default function DashboardPage() {
               agentCount={agents.length}
               departmentCount={departments.length}
               onNavigate={(v) => setView(v as View)}
+              onDismiss={() => {}}
+            />
+            <PulseCheck
+              agents={visibleAgents}
               onDismiss={() => {}}
             />
           </div>

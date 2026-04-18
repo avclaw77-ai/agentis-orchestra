@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react"
 import { Send, Bot, User, Wrench, Brain, Cpu, Loader2, Paperclip, Square, Copy, Check, Pencil, RotateCcw, Coins } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
+import { FeedbackThumbs } from "@/components/feedback-thumbs"
 import { cn } from "@/lib/utils"
 import { AGENT_COLORS } from "@/lib/constants"
 
@@ -447,6 +448,9 @@ export function ChatPanel({ channel, agentName, agentDisplayName, departmentId, 
                         <RotateCcw size={11} />
                       </button>
                     </>
+                  )}
+                  {msg.role === "assistant" && !msg.streaming && (
+                    <FeedbackThumbs agentId={channel} contextType="chat" contextId={msg.id} />
                   )}
                   {msg.role === "assistant" && msg.usage && (
                     <span className="flex items-center gap-1 text-[10px] text-muted-foreground/60" title={`Input: ${msg.usage.inputTokens || 0} / Output: ${msg.usage.outputTokens || 0}${msg.usage.cost ? ` / $${msg.usage.cost.toFixed(4)}` : ""}`}>

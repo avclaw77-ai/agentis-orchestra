@@ -47,6 +47,7 @@ Tell it about your company. It proposes a tailored agent team. You customize, ac
 
 | Problem | How we solve it |
 |---------|----------------|
+| **"My agents never improve"** | **Soul Engine.** Agents evolve their own personas through user feedback, execution analysis, and self-evaluation. No other platform does this. |
 | **"Which model should I use?"** | Model router picks the best model per task. CLI-first = free tokens via Pro subscription. |
 | **"My agents only work when I chat"** | Heartbeat engine. Agents wake on schedule, check for work, execute, report back. Autonomously. |
 | **"Setup takes days of config files"** | 7-step web wizard. Or give us your company URL -- we propose your entire team in 30 seconds. |
@@ -133,6 +134,26 @@ No YAML. No config files. No CLI flags.
 - **Keyboard shortcuts** -- Cmd+K search, Cmd+1-9 navigation
 - **Responsive** -- works on desktop and mobile
 - **Loading skeletons** -- polished initial load experience
+
+---
+
+## Soul Engine -- agents that get better over time
+
+No other platform has this. Every competitor ships static agent definitions -- you write a system prompt and hope it works. Orchestra's Soul Engine makes agents evolve through actual work.
+
+**Layer 1: Guided Soul Builder**
+A 7-step interview that builds agent personas through conversation, not prompt engineering. Non-technical users answer questions like "What does this agent do?" and "What should it never do?" -- the system generates a structured, versioned persona.
+
+**Layer 2: Feedback-Driven Refinement**
+- Thumbs up/down after every chat response (one click, non-intrusive)
+- Optional daily/weekly pulse checks ("How did your agents do?")
+- The system aggregates signals, identifies patterns, and proposes persona changes
+- Proposals go through an approval workflow before applying
+
+**Layer 3: Autonomous Self-Evaluation**
+After each autonomous run, agents reflect on their own performance -- what worked, what was hard, what they'd change. These evaluations feed into the refinement engine, creating a continuous improvement loop.
+
+**Always optional.** Every feedback prompt is dismissible in one click. The system works fine with zero user input. If someone dismisses feedback 3 times, it stops asking.
 
 ---
 

@@ -7,6 +7,9 @@ import { cn } from "@/lib/utils"
 import { AGENT_COLORS, STATUS_COLORS } from "@/lib/constants"
 import { HeartbeatConfig } from "@/components/heartbeat-config"
 import { RunTimeline } from "@/components/run-timeline"
+import { SoulBuilder } from "@/components/soul-builder"
+import { PersonaHistory } from "@/components/persona-history"
+import { PersonaProposals } from "@/components/persona-proposals"
 import type { Agent, AgentConfig, HeartbeatRun, Department } from "@/types"
 
 // ---------------------------------------------------------------------------
@@ -39,7 +42,7 @@ const COST_BADGE_STYLES: Record<string, string> = {
   $$$: "bg-red-50 text-red-500",
 }
 
-type Tab = "overview" | "config" | "heartbeat" | "runs"
+type Tab = "overview" | "config" | "heartbeat" | "runs" | "soul"
 
 // ---------------------------------------------------------------------------
 // Props
@@ -237,9 +240,12 @@ export function AgentProfile({
   const totalCostCents = runtimeStats?.totalCostCents ?? 0
   const tasksCompleted = runtimeStats?.tasksCompleted ?? 0
 
+  const [showSoulBuilder, setShowSoulBuilder] = useState(false)
+
   const tabs: { key: Tab; label: string }[] = [
     { key: "overview", label: "Overview" },
     { key: "config", label: "Config" },
+    { key: "soul", label: "Soul" },
     { key: "heartbeat", label: "Heartbeat" },
     { key: "runs", label: "Runs" },
   ]
@@ -694,6 +700,48 @@ export function AgentProfile({
           )}
 
           {/* ============================================================= */}
+          {/* SOUL TAB                                                       */}
+          {/* ============================================================= */}
+          {tab === "soul" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold">Agent Soul</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Persona evolution, feedback signals, and refinement proposals
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowSoulBuilder(true)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                    "bg-primary/10 text-primary hover:bg-primary/20"
+                  )}
+                >
+                  <Sparkles size={12} />
+                  Soul Builder
+                </button>
+              </div>
+
+              <PersonaProposals agentId={agent.id} agentName={agent.displayName || agent.name} />
+              <PersonaHistory agentId={agent.id} />
+
+              {showSoulBuilder && (
+                <SoulBuilder
+                  agentId={agent.id}
+                  agentName={agent.displayName || agent.name}
+                  currentPersona={config?.persona || undefined}
+                  agents={agents}
+                  onClose={() => setShowSoulBuilder(false)}
+                  onSave={() => {
+                    setShowSoulBuilder(false)
+                    toast.success("Persona updated via Soul Builder")
+                  }}
+                />
+              )}
+            </div>
+          )}
+
           {/* RUNS TAB                                                       */}
           {/* ============================================================= */}
           {tab === "runs" && (
