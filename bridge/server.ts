@@ -108,14 +108,14 @@ app.post("/chat/cancel", (req, res) => {
 })
 
 // Model registry + provider status
-app.get("/models", (_req, res) => {
+app.get("/models", async (_req, res) => {
   const providerStatus: { provider: Provider; name: string; configured: boolean; mode: string; description: string; color: string }[] = [
     {
       provider: "claude-cli",
       name: "Claude (CLI)",
-      configured: true, // always available with Pro sub
+      configured: true,
       mode: "cli",
-      description: "Pro subscription -- flat monthly cost, no per-token billing",
+      description: "Pro subscription -- flat monthly cost, included in sub",
       color: "#d97706",
     },
     {
@@ -139,7 +139,7 @@ app.get("/models", (_req, res) => {
       name: "OpenAI",
       configured: !!process.env.OPENAI_API_KEY,
       mode: "api",
-      description: "GPT-4o, o3 -- structured output and reasoning",
+      description: "GPT-5.4 family, o-series -- reasoning and structured output",
       color: "#10b981",
     },
   ]
@@ -152,9 +152,31 @@ app.get("/models", (_req, res) => {
     configuredProviders.has(m.provider)
   )
 
+  // For OpenAI: also fetch live model list from API to show all available models
+  let liveOpenAIModels: string[] = []
+  if (process.env.OPENAI_API_KEY) {
+    try {
+      const apiRes = await fetch("https://api.openai.com/v1/models", {
+        headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+        signal: AbortSignal.timeout(5_000),
+      })
+      if (apiRes.ok) {
+        const data = await apiRes.json()
+        const exclude = ["embedding", "tts", "whisper", "dall-e", "moderation", "babbage", "davinci", "text-"]
+        liveOpenAIModels = (data?.data || [])
+          .map((m: { id: string }) => m.id)
+          .filter((id: string) => !exclude.some((p) => id.includes(p)))
+          .sort()
+      }
+    } catch {
+      // Live fetch failed, use registry only
+    }
+  }
+
   res.json({
     providers: providerStatus,
     models: availableModels,
+    liveOpenAIModels,
     heartbeatStatus: heartbeatEngine.isRunning(),
   })
 })

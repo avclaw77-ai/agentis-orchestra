@@ -322,19 +322,20 @@ async function testOpenAI(
     }
 
     const data = await res.json()
-    // Filter to notable models
-    const notable = ["gpt-5.4", "gpt-5.4-mini", "gpt-5.4-mini", "o4-mini", "o3", "o3-mini"]
+    // Return all chat-capable models the API key has access to
+    // Filter out embedding, tts, whisper, dall-e, and moderation models
+    const excludePatterns = ["embedding", "tts", "whisper", "dall-e", "moderation", "babbage", "davinci", "text-"]
     const modelIds = Array.isArray(data?.data)
       ? data.data
           .map((m: { id: string }) => m.id)
-          .filter((id: string) => notable.some((n) => id.includes(n)))
-          .slice(0, 10)
+          .filter((id: string) => !excludePatterns.some((p) => id.includes(p)))
+          .sort()
       : []
 
     return {
       provider: "openai",
       valid: true,
-      models: modelIds.length > 0 ? modelIds : ["gpt-5.4", "gpt-5.4-mini"],
+      models: modelIds,
     }
   } catch (err) {
     return {
