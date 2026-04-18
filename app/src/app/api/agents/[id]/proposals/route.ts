@@ -69,7 +69,7 @@ export async function POST(
 
   const { proposalType, section, currentValue, proposedValue, reasoning, confidence, source, evidenceCount } = body
 
-  if (!proposalType || !proposedValue || !reasoning || !source) {
+  if (!proposalType || proposedValue === undefined || !reasoning || !source) {
     return NextResponse.json(
       { error: "proposalType, proposedValue, reasoning, and source are required" },
       { status: 400 }
