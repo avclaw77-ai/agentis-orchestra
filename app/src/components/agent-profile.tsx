@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X, Save, Plus, X as XIcon, Sparkles, Loader2, Play } from "lucide-react"
+import { X, Save, Plus, X as XIcon, Sparkles, Loader2, Play, Zap } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { AGENT_COLORS, STATUS_COLORS } from "@/lib/constants"
@@ -738,16 +738,41 @@ export function AgentProfile({
                     Persona evolution, feedback signals, and refinement proposals
                   </p>
                 </div>
-                <button
-                  onClick={() => setShowSoulBuilder(true)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                    "bg-primary/10 text-primary hover:bg-primary/20"
-                  )}
-                >
-                  <Sparkles size={12} />
-                  Soul Builder
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={async () => {
+                      toast.info("Analyzing feedback signals...")
+                      try {
+                        const res = await fetch(`/api/agents/${agent.id}/refine`, { method: "POST" })
+                        if (res.ok) {
+                          const data = await res.json()
+                          toast.success(`${data.proposals?.length || 0} proposals generated`)
+                        } else {
+                          const data = await res.json().catch(() => ({}))
+                          toast.error(data.error || "Refinement failed")
+                        }
+                      } catch { toast.error("Refinement failed") }
+                    }}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                      "bg-amber-50 text-amber-700 hover:bg-amber-100"
+                    )}
+                    title="Analyze feedback and self-evaluations to generate persona improvement proposals"
+                  >
+                    <Zap size={12} />
+                    Refine
+                  </button>
+                  <button
+                    onClick={() => setShowSoulBuilder(true)}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                      "bg-primary/10 text-primary hover:bg-primary/20"
+                    )}
+                  >
+                    <Sparkles size={12} />
+                    Soul Builder
+                  </button>
+                </div>
               </div>
 
               <PersonaProposals agentId={agent.id} agentName={agent.displayName || agent.name} />

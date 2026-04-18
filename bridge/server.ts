@@ -2,7 +2,9 @@ import http from "node:http"
 import express from "express"
 import cors from "cors"
 import { SessionManager } from "./session-manager.js"
-import { MODEL_REGISTRY, type Provider } from "./models.js"
+import { MODEL_REGISTRY, type Provider, type TaskType } from "./models.js"
+import { routeModel } from "./router.js"
+import { executeWithProvider } from "./providers.js"
 import * as db from "./db.js"
 // cost-tracker now shares db.ts pool -- no separate init needed
 import { heartbeatEngine } from "./heartbeat.js"
@@ -214,6 +216,152 @@ app.get("/runs/:id", async (req, res) => {
     return
   }
   res.json({ run })
+})
+
+// =============================================================================
+// Refinement Engine -- analyze feedback and generate persona proposals
+// =============================================================================
+
+app.post("/agents/:id/refine", async (req, res) => {
+  const agentId = req.params.id
+  const sql = db._sql?.()
+  if (!sql) { res.status(503).json({ error: "Database not ready" }); return }
+
+  try {
+    // 1. Gather feedback signals (last 30 days)
+    const feedback = await sql`
+      SELECT type, rating, comment, context_type, created_at
+      FROM agent_feedback
+      WHERE agent_id = ${agentId} AND created_at > NOW() - INTERVAL '30 days'
+      ORDER BY created_at DESC LIMIT 50
+    `
+
+    // 2. Gather self-evaluations (last 30 days)
+    const selfEvals = await sql`
+      SELECT what_worked, what_was_hard, would_change_to, confidence_in_result, created_at
+      FROM agent_self_evaluations
+      WHERE agent_id = ${agentId} AND created_at > NOW() - INTERVAL '30 days'
+      ORDER BY created_at DESC LIMIT 20
+    `
+
+    // 3. Gather run outcomes (last 30 days)
+    const runs = await sql`
+      SELECT status, input_tokens, output_tokens, cost_cents, duration_ms, error
+      FROM heartbeat_runs
+      WHERE agent_id = ${agentId} AND created_at > NOW() - INTERVAL '30 days'
+      ORDER BY created_at DESC LIMIT 50
+    `
+
+    // 4. Get current persona
+    const [config] = await sql`
+      SELECT persona, model FROM agent_configs WHERE agent_id = ${agentId} LIMIT 1
+    `
+
+    if (feedback.length === 0 && selfEvals.length === 0) {
+      res.json({ proposals: [], message: "Not enough signals to generate proposals (need feedback or self-evaluations)" })
+      return
+    }
+
+    // 5. Build analysis prompt
+    const thumbsUp = feedback.filter((f: any) => f.type === "thumbs" && f.rating > 0).length
+    const thumbsDown = feedback.filter((f: any) => f.type === "thumbs" && f.rating < 0).length
+    const negativeComments = feedback.filter((f: any) => f.rating < 0 && f.comment).map((f: any) => f.comment)
+    const pulseRatings = feedback.filter((f: any) => f.type?.startsWith("pulse")).map((f: any) => f.rating)
+    const avgPulse = pulseRatings.length > 0 ? (pulseRatings.reduce((a: number, b: number) => a + b, 0) / pulseRatings.length).toFixed(1) : "N/A"
+    const successRate = runs.length > 0 ? Math.round((runs.filter((r: any) => r.status === "succeeded").length / runs.length) * 100) : "N/A"
+    const commonHardPoints = selfEvals.filter((e: any) => e.what_was_hard).map((e: any) => e.what_was_hard)
+    const commonChanges = selfEvals.filter((e: any) => e.would_change_to).map((e: any) => e.would_change_to)
+
+    const analysisPrompt = `You are a persona refinement engine. Analyze these signals about an AI agent and propose specific improvements to its persona.
+
+CURRENT PERSONA:
+${config?.persona || "(no persona set)"}
+
+FEEDBACK SUMMARY (last 30 days):
+- Thumbs up: ${thumbsUp}, Thumbs down: ${thumbsDown}
+- Average pulse rating: ${avgPulse}/5
+- Run success rate: ${successRate}%
+- Negative feedback comments: ${negativeComments.length > 0 ? negativeComments.join("; ") : "None"}
+
+SELF-EVALUATION PATTERNS:
+- What was hard: ${commonHardPoints.length > 0 ? commonHardPoints.join("; ") : "None reported"}
+- Suggested changes: ${commonChanges.length > 0 ? commonChanges.join("; ") : "None reported"}
+
+Based on these signals, propose 1-3 specific persona improvements. For each, respond with a JSON array:
+[
+  {
+    "proposalType": "modify_tone" | "add_guardrail" | "adjust_priority" | "add_skill" | "remove_behavior",
+    "section": "role" | "priorities" | "guardrails" | "tone" | "tools",
+    "currentValue": "what exists now (or null)",
+    "proposedValue": "what it should be",
+    "reasoning": "why, citing specific signals",
+    "confidence": "high" | "medium" | "low",
+    "evidenceCount": <number of signals supporting this>
+  }
+]
+
+Only propose changes with at least 3 supporting signals. Be specific and actionable. Respond with ONLY the JSON array.`
+
+    // 6. Call LLM for analysis
+    const route = routeModel({ taskType: "analysis" as TaskType, preferCLI: true })
+    let llmOutput = ""
+    const abortController = new AbortController()
+    const timeout = setTimeout(() => abortController.abort(), 60_000)
+
+    try {
+      await executeWithProvider(
+        route.model.provider,
+        {
+          model: route.model.model,
+          message: analysisPrompt,
+          signal: abortController.signal,
+          maxTurns: 1,
+          timeoutMs: 60_000,
+          verbose: false,
+        },
+        {
+          onToken: (t: string) => { llmOutput += t },
+          onToolUse: () => {},
+          onComplete: (r: string) => { if (r) llmOutput = r },
+          onError: (e: string) => { console.warn("[refine] LLM error:", e) },
+        }
+      )
+    } finally {
+      clearTimeout(timeout)
+    }
+
+    // 7. Parse proposals and save to DB
+    const jsonMatch = llmOutput.match(/\[[\s\S]*\]/)
+    if (!jsonMatch) {
+      res.json({ proposals: [], message: "LLM did not return valid proposals", rawOutput: llmOutput.slice(0, 500) })
+      return
+    }
+
+    const proposals = JSON.parse(jsonMatch[0]) as Array<{
+      proposalType: string; section: string; currentValue: string | null;
+      proposedValue: string; reasoning: string; confidence: string; evidenceCount: number
+    }>
+
+    // Save each proposal to DB
+    const saved = []
+    for (const p of proposals) {
+      const [row] = await sql`
+        INSERT INTO persona_proposals (agent_id, proposal_type, section, current_value, proposed_value, reasoning, confidence, source, evidence_count, status)
+        VALUES (${agentId}, ${p.proposalType}, ${p.section || null}, ${p.currentValue || null}, ${p.proposedValue}, ${p.reasoning}, ${p.confidence || "medium"}, 'refinement_engine', ${p.evidenceCount || 1}, 'pending')
+        RETURNING id, proposal_type, section, proposed_value, confidence, evidence_count
+      `
+      saved.push(row)
+    }
+
+    res.json({
+      proposals: saved,
+      signalsSummary: { thumbsUp, thumbsDown, avgPulse, successRate, feedbackCount: feedback.length, selfEvalCount: selfEvals.length, runCount: runs.length },
+      message: `Generated ${saved.length} persona proposals from ${feedback.length} feedback signals and ${selfEvals.length} self-evaluations`,
+    })
+  } catch (err) {
+    console.error("[refine] Error:", err)
+    res.status(500).json({ error: err instanceof Error ? err.message : "Refinement failed" })
+  }
 })
 
 // =============================================================================
