@@ -119,9 +119,9 @@ export function DashboardHome({ agents, departments, onSelectAgent, onAgentToggl
     fetchDashboardData()
   }, [fetchDashboardData])
 
-  // Auto-refresh every 30 seconds
+  // Auto-refresh every 10 seconds
   useEffect(() => {
-    const interval = setInterval(fetchDashboardData, 30000)
+    const interval = setInterval(fetchDashboardData, 10000)
     return () => clearInterval(interval)
   }, [fetchDashboardData])
 

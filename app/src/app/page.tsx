@@ -28,6 +28,7 @@ import { ProviderKeys } from "@/components/provider-keys"
 import { SearchModal } from "@/components/search-modal"
 import { ConversationList } from "@/components/conversation-list"
 import { OnboardingChecklist } from "@/components/onboarding-checklist"
+import { SystemLogs } from "@/components/system-logs"
 import { DashboardSkeleton, KanbanSkeleton, ChatSkeleton } from "@/components/loading-skeleton"
 import type {
   Agent,
@@ -95,7 +96,7 @@ export default function DashboardPage() {
   const [userName, setUserName] = useState<string>("")
 
   // Settings sub-tab
-  const [settingsTab, setSettingsTab] = useState<"general" | "team" | "connectors" | "approvals" | "skills" | "decisions" | "activity" | "export">("general")
+  const [settingsTab, setSettingsTab] = useState<"general" | "team" | "connectors" | "approvals" | "skills" | "decisions" | "activity" | "logs" | "export">("general")
   const [modelsTab, setModelsTab] = useState<"config" | "sandbox" | "keys">("config")
 
   // Company general form state
@@ -1171,6 +1172,7 @@ export default function DashboardPage() {
                 { key: "team", label: "Team" },
                 { key: "connectors", label: "Connectors" },
                 { key: "activity", label: "Activity" },
+                { key: "logs", label: "Logs" },
                 { key: "decisions", label: "Decisions" },
                 { key: "approvals", label: "Approvals" },
                 { key: "skills", label: "Skills" },
@@ -1293,6 +1295,10 @@ export default function DashboardPage() {
 
           {settingsTab === "activity" && (
             <ActivityLog departmentId={selectedDepartment} />
+          )}
+
+          {settingsTab === "logs" && (
+            <SystemLogs />
           )}
 
           {settingsTab === "decisions" && (

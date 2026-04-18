@@ -195,6 +195,97 @@ app.get("/runs/:id", async (req, res) => {
 })
 
 // =============================================================================
+// Live run SSE stream -- poll run status until complete
+// =============================================================================
+
+app.get("/runs/:id/stream", async (req, res) => {
+  const runId = req.params.id
+  const run = await db.getRunById(runId)
+  if (!run) {
+    res.status(404).json({ error: "Run not found" })
+    return
+  }
+
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache, no-transform",
+    Connection: "keep-alive",
+    "X-Accel-Buffering": "no",
+  })
+
+  const send = (event: string, data: unknown) => {
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
+  }
+
+  let closed = false
+  res.on("close", () => { closed = true })
+
+  // Poll run status every 2 seconds until terminal
+  const terminal = ["succeeded", "failed", "cancelled", "timed_out"]
+  send("status", { run })
+
+  const poll = setInterval(async () => {
+    if (closed) { clearInterval(poll); return }
+    try {
+      const latest = await db.getRunById(runId)
+      if (!latest) { clearInterval(poll); res.end(); return }
+      send("status", { run: latest })
+      if (terminal.includes(latest.status)) {
+        clearInterval(poll)
+        send("done", { status: latest.status })
+        res.end()
+      }
+    } catch {
+      // keep polling
+    }
+  }, 2000)
+
+  // Safety timeout: 5 minutes max
+  setTimeout(() => {
+    if (!closed) {
+      clearInterval(poll)
+      send("timeout", { message: "Stream timed out" })
+      res.end()
+    }
+  }, 300_000)
+})
+
+// =============================================================================
+// System logs -- return recent bridge activity
+// =============================================================================
+
+const logBuffer: Array<{ timestamp: string; level: string; message: string; source: string }> = []
+const MAX_LOG_BUFFER = 500
+
+// Override console to capture logs
+const origLog = console.log
+const origError = console.error
+const origWarn = console.warn
+
+function captureLog(level: string, args: unknown[]) {
+  const message = args.map((a) => typeof a === "string" ? a : JSON.stringify(a)).join(" ")
+  const source = message.startsWith("[") ? message.match(/\[([^\]]+)\]/)?.[1] || "system" : "system"
+  logBuffer.push({ timestamp: new Date().toISOString(), level, message, source })
+  if (logBuffer.length > MAX_LOG_BUFFER) logBuffer.shift()
+}
+
+console.log = (...args: unknown[]) => { captureLog("info", args); origLog.apply(console, args) }
+console.error = (...args: unknown[]) => { captureLog("error", args); origError.apply(console, args) }
+console.warn = (...args: unknown[]) => { captureLog("warn", args); origWarn.apply(console, args) }
+
+app.get("/logs", (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit as string || "100", 10), 500)
+  const level = req.query.level as string || undefined
+  const source = req.query.source as string || undefined
+
+  let filtered = logBuffer
+  if (level) filtered = filtered.filter((l) => l.level === level)
+  if (source) filtered = filtered.filter((l) => l.source === source)
+
+  res.json({ logs: filtered.slice(-limit), total: filtered.length })
+})
+
+// =============================================================================
 // Plugin API routes
 // =============================================================================
 
