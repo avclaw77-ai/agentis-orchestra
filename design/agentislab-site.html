@@ -6,7 +6,7 @@
 <title>AgentisLab -- We build AI that runs companies</title>
 <meta name="description" content="Boutique AI firm in Quebec City. We don't advise on AI. We build it, run it, and ship it. AgentisOrchestra is our open-source platform.">
 <meta property="og:title" content="AgentisLab -- We build AI that runs companies">
-<meta property="og:description" content="5 builders, 50x output. Multi-agent orchestration for enterprises.">
+<meta property="og:description" content="From strategy to production. Multi-agent orchestration for enterprises.">
 <meta property="og:url" content="https://agentislab.ai">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -186,7 +186,7 @@ footer a { color: var(--primary); text-decoration: none; }
     <div class="hero-content">
       <div class="hero-kicker reveal">Quebec City, Canada</div>
       <h1 class="reveal d1">We build AI<br>that <em>runs</em> companies.</h1>
-      <p class="reveal d2">Not advice. Not prototypes. Production AI systems that work autonomously, learn from feedback, and scale with your organization. 5 builders, 50x output.</p>
+      <p class="reveal d2">Not advice. Not prototypes. Production AI systems that work autonomously, learn from feedback, and scale with your organization. From strategy to production.</p>
       <div class="hero-actions reveal d3">
         <a href="#contact" class="btn btn-primary">Talk to us</a>
         <a href="#orchestra" class="btn btn-outline">See Orchestra</a>
@@ -222,39 +222,22 @@ footer a { color: var(--primary); text-decoration: none; }
   </div>
 </section>
 
-<!-- Orchestra Product -->
-<section class="product-section" id="orchestra">
-  <canvas id="product-canvas"></canvas>
-  <div class="container product-content">
-    <div class="section-label reveal" style="color: rgba(2,132,199,0.7);">Our Platform</div>
-    <div class="section-title reveal d1" style="color: #fff;">AgentisOrchestra</div>
-    <div class="section-desc reveal d2">Open-source, Docker-first platform for running AI agent teams. One install = one company. Department by department. With the Soul Engine -- agents that evolve.</div>
-
-    <div class="product-features">
-      <div class="pf reveal d1">
-        <h4>Soul Engine</h4>
-        <p>3-layer persona evolution. Guided building, feedback refinement, autonomous self-evaluation. Agents get better the more they work.</p>
-      </div>
-      <div class="pf reveal d2">
-        <h4>Heartbeat Engine</h4>
-        <p>Agents wake on schedule, check for work, execute, report back. Cron, webhook, or manual. Budget-checked before every run.</p>
-      </div>
-      <div class="pf reveal d3">
-        <h4>Multi-Model Intelligence</h4>
-        <p>17 models across 4 providers. Smart router picks best model per task. Admin governance controls which models are available.</p>
-      </div>
-      <div class="pf reveal d4">
-        <h4>Full Governance</h4>
-        <p>Budget cascade, approval workflows, audit trails, agent escalation. Everything versioned, everything accountable.</p>
+<!-- Orchestra -- compact, links to microsite -->
+<section id="orchestra" style="background: var(--bg-dark); color: #fff; padding: 80px 0;">
+  <div class="container" style="display: flex; align-items: center; gap: 48px; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 300px;">
+      <div class="section-label reveal" style="color: rgba(2,132,199,0.7);">Open Source</div>
+      <h2 class="reveal d1" style="font-size: 28px; font-weight: 800; color: #fff; letter-spacing: -0.03em; margin-bottom: 12px;">AgentisOrchestra</h2>
+      <p class="reveal d2" style="font-size: 14px; color: rgba(255,255,255,0.5); line-height: 1.7; margin-bottom: 24px;">Our open-source platform for running AI agent teams. Department by department. With the Soul Engine -- agents that evolve through real work. The foundation we deploy to every client.</p>
+      <div class="reveal d3" style="display: flex; gap: 12px;">
+        <a href="https://orchestra.agentislab.ai" class="btn" style="background: #fff; color: var(--text); font-size: 13px; padding: 10px 24px;">Learn more</a>
+        <a href="https://github.com/AgentisLab/AgentisOrchestra" class="btn" style="background: transparent; color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.15); font-size: 13px; padding: 10px 24px;" target="_blank">GitHub</a>
       </div>
     </div>
-
-    <div class="product-cta reveal d4">
-      <a href="https://github.com/AgentisLab/AgentisOrchestra" class="btn btn-white" target="_blank">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-        View on GitHub
-      </a>
-      <a href="https://orchestra.agentislab.ai" class="btn btn-ghost">Live Demo</a>
+    <div class="reveal d3" style="flex: 0 0 auto; display: flex; gap: 16px; font-size: 12px; color: rgba(255,255,255,0.35);">
+      <div style="text-align: center;"><div style="font-size: 24px; font-weight: 800; color: var(--primary);">17</div>models</div>
+      <div style="text-align: center;"><div style="font-size: 24px; font-weight: 800; color: var(--primary);">3</div>layers</div>
+      <div style="text-align: center;"><div style="font-size: 24px; font-weight: 800; color: var(--primary);">69</div>tests</div>
     </div>
   </div>
 </section>
@@ -380,7 +363,6 @@ class SoulTopology {
 }
 
 new SoulTopology(document.getElementById('hero-canvas'), { theme: 'light' }).draw();
-new SoulTopology(document.getElementById('product-canvas'), { theme: 'dark' }).draw();
 </script>
 
 </body>
