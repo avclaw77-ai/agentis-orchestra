@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
       title: conversations.title,
       createdAt: conversations.createdAt,
       updatedAt: conversations.updatedAt,
-      messageCount: sql<number>`(SELECT count(*) FROM chat_messages WHERE conversation_id = ${conversations.id})::int`,
+      messageCount: sql<number>`(SELECT count(*) FROM chat_messages WHERE conversation_id = conversations.id)::int`,
     })
     .from(conversations)
     .where(eq(conversations.agentId, agentId))
