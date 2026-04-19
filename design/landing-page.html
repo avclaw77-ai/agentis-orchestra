@@ -569,8 +569,9 @@ html[lang="fr"] a[data-lang="fr"] { display: inline; }
 <!-- ═══════════════════════════════════════════════════════════════════════════
      HERO
      ═══════════════════════════════════════════════════════════════════════════ -->
-<section class="hero" id="hero">
-  <div class="container">
+<section class="hero" id="hero" style="position: relative; overflow: hidden;">
+  <canvas id="soul-hero-canvas" style="position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.5;"></canvas>
+  <div class="container" style="position: relative; z-index: 1;">
     <div class="hero-badge reveal">
       <span class="dot"></span>
       <span data-lang="en">Open source -- MIT License</span>
@@ -848,8 +849,9 @@ html[lang="fr"] a[data-lang="fr"] { display: inline; }
 <!-- ═══════════════════════════════════════════════════════════════════════════
      SOUL ENGINE
      ═══════════════════════════════════════════════════════════════════════════ -->
-<section id="soul-engine" style="background:var(--bg-white);border-top:1px solid var(--border-light);border-bottom:1px solid var(--border-light);">
-  <div class="container">
+<section id="soul-engine" style="background:var(--bg-white);border-top:1px solid var(--border-light);border-bottom:1px solid var(--border-light);position:relative;overflow:hidden;">
+  <canvas id="soul-section-canvas" style="position:absolute;inset:0;z-index:0;width:100%;height:100%;pointer-events:none;opacity:0.35;"></canvas>
+  <div class="container" style="position:relative;z-index:1;">
     <div class="section-header">
       <div class="section-label reveal" data-lang="en">Soul Engine</div>
       <div class="section-label reveal" data-lang="fr">Moteur d'ame</div>
@@ -1113,6 +1115,76 @@ const budgetObserver = new IntersectionObserver((entries) => {
 }, { threshold: 0.3 });
 
 document.querySelectorAll('.sim-budget').forEach((el) => budgetObserver.observe(el));
+
+// ══════════════════════════════════════════════════════════════════════
+// Soul Topology -- generative mesh backgrounds
+// ══════════════════════════════════════════════════════════════════════
+class SoulTopology {
+  constructor(canvas, opts = {}) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.theme = opts.theme || 'light';
+    this.accent = opts.accent || 'blue';
+    this.time = Math.random() * 100;
+    this.init();
+  }
+  init() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const rect = this.canvas.parentElement.getBoundingClientRect();
+    this.canvas.width = rect.width * dpr;
+    this.canvas.height = rect.height * dpr;
+    this.canvas.style.width = rect.width + 'px';
+    this.canvas.style.height = rect.height + 'px';
+    this.ctx.scale(dpr, dpr);
+    this.w = rect.width;
+    this.h = rect.height;
+    const cols = 25;
+    const rows = Math.round(cols * (this.h / this.w));
+    this.cols = cols; this.rows = rows;
+    this.points = [];
+    for (let r = 0; r < rows; r++)
+      for (let c = 0; c < cols; c++)
+        this.points.push({ bx: c/(cols-1), by: r/(rows-1), x:0, y:0, phase: Math.random()*Math.PI*2, speed: 0.4+Math.random()*0.4 });
+  }
+  draw() {
+    const { ctx, w, h, cols, rows, points } = this;
+    this.time += 0.006;
+    const t = this.time;
+    ctx.clearRect(0, 0, w, h);
+    const cx = w * 0.5, cy = h * 0.45, scale = Math.min(w, h) * 0.9;
+    const colors = this.theme === 'dark'
+      ? { line: '#0284C7', bg1: 'transparent', bg2: 'transparent' }
+      : { line: '#0284C7', bg1: 'transparent', bg2: 'transparent' };
+    points.forEach(p => {
+      p.x = cx + (p.bx - 0.5 + Math.sin(t*p.speed + p.by*5 + p.phase)*0.04) * scale;
+      p.y = cy + (p.by - 0.5 + Math.cos(t*p.speed*0.7 + p.bx*6 + p.phase)*0.05) * scale;
+    });
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const idx = r*cols+c, p = points[idx];
+        const dx = (p.x-cx)/scale, dy = (p.y-cy)/scale;
+        const alpha = Math.max(0, 0.3 - Math.sqrt(dx*dx+dy*dy)*0.55);
+        if (alpha <= 0) continue;
+        ctx.strokeStyle = colors.line;
+        ctx.lineWidth = 0.5;
+        ctx.globalAlpha = alpha;
+        if (c < cols-1) { const r2=points[idx+1]; ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(r2.x,r2.y); ctx.stroke(); }
+        if (r < rows-1) { const d=points[idx+cols]; ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(d.x,d.y); ctx.stroke(); }
+        if ((r+c)%3===0) { ctx.globalAlpha=alpha*1.5; ctx.fillStyle=colors.line; ctx.beginPath(); ctx.arc(p.x,p.y,1+Math.sin(t*2+p.phase)*0.5,0,Math.PI*2); ctx.fill(); }
+      }
+    }
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(() => this.draw());
+  }
+}
+
+// Hero canvas (light theme, behind hero text)
+const heroC = document.getElementById('soul-hero-canvas');
+if (heroC) { const st = new SoulTopology(heroC, { theme: 'light', accent: 'blue' }); st.draw(); }
+
+// Soul Engine section canvas
+const soulC = document.getElementById('soul-section-canvas');
+if (soulC) { const st = new SoulTopology(soulC, { theme: 'light', accent: 'warm' }); st.draw(); }
 </script>
 </body>
 </html>
