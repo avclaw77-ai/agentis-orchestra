@@ -39,25 +39,25 @@ fi
 echo -e "${YELLOW}Deploying to${NC} ${HOST}"
 echo ""
 
-step "1/7" "Pulling latest code..."
+step "1/8" "Pulling latest code..."
 run "cd $DIR && git stash 2>/dev/null; git pull origin main 2>&1 | tail -3"
 
-step "2/7" "Installing app dependencies..."
+step "2/8" "Installing app dependencies..."
 run "cd $DIR/app && CI=true pnpm install 2>&1 | tail -1"
 
-step "3/7" "Installing bridge dependencies..."
-run "cd $DIR/bridge && CI=true pnpm install 2>&1 | tail -1"
+step "3/8" "Installing bridge dependencies + build..."
+run "cd $DIR/bridge && CI=true pnpm install 2>&1 | tail -1 && npx tsc 2>&1 | tail -2"
 
-step "4/7" "Running database migrations..."
+step "4/8" "Running database migrations..."
 run "cd $DIR/app && DATABASE_URL=\"postgres://agentis:\$(grep DB_PASSWORD $DIR/.env | cut -d= -f2)@127.0.0.1:5432/agentis_orchestra\" npx drizzle-kit push 2>&1 | tail -2"
 
-step "5/7" "Configuring Docker for host bridge..."
+step "5/8" "Configuring Docker for host bridge..."
 run "cd $DIR && bash scripts/vps-post-pull.sh 2>&1"
 
-step "6/7" "Rebuilding and restarting app..."
+step "6/8" "Rebuilding and restarting app..."
 run "cd $DIR && docker compose build app 2>&1 | tail -2 && docker compose up -d app 2>&1 | tail -3"
 
-step "7/7" "Restarting bridge..."
+step "7/8" "Restarting bridge..."
 run "systemctl restart orchestra-bridge 2>/dev/null || true"
 
 # Health check
