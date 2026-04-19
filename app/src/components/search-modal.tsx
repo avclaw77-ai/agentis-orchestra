@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useMemo } from "react"
+import { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import { cn } from "@/lib/utils"
 import {
   Search,
@@ -88,24 +88,55 @@ export function SearchModal({
 }: SearchModalProps) {
   const [query, setQuery] = useState("")
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const [serverResults, setServerResults] = useState<{
+    tasks: Array<{ id: string; title: string; status: string; priority: string }>
+    goals: Array<{ id: string; title: string; status: string }>
+    routines: Array<{ id: string; name: string; status: string }>
+  }>({ tasks: [], goals: [], routines: [] })
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
   // Focus input on open
   useEffect(() => {
     if (open) {
       setQuery("")
       setSelectedIndex(0)
+      setServerResults({ tasks: [], goals: [], routines: [] })
       setTimeout(() => inputRef.current?.focus(), 50)
     }
   }, [open])
 
-  // Build results
+  // Debounced server-side search for tasks, goals, routines
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    const q = query.trim()
+    if (q.length < 2) {
+      setServerResults({ tasks: [], goals: [], routines: [] })
+      return
+    }
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=10`)
+        if (res.ok) {
+          const data = await res.json()
+          setServerResults({
+            tasks: data.results?.tasks || [],
+            goals: data.results?.goals || [],
+            routines: data.results?.routines || [],
+          })
+        }
+      } catch { /* silent */ }
+    }, 250)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [query])
+
+  // Build results: nav + agents client-side (instant), tasks/goals/routines from server
   const results = useMemo<SearchResult[]>(() => {
     const q = query.toLowerCase().trim()
     const out: SearchResult[] = []
 
-    // Navigation
+    // Navigation (always client-side, instant)
     for (const nav of NAV_ITEMS) {
       const match =
         !q ||
@@ -126,7 +157,7 @@ export function SearchModal({
       }
     }
 
-    // Agents
+    // Agents (client-side, instant)
     for (const agent of agents) {
       const name = agent.displayName || agent.name
       if (!q || name.toLowerCase().includes(q) || agent.role?.toLowerCase().includes(q)) {
@@ -144,66 +175,54 @@ export function SearchModal({
       }
     }
 
-    // Tasks (only when query is provided to avoid flooding)
-    if (q) {
-      for (const task of tasks.slice(0, 200)) {
-        if (task.title.toLowerCase().includes(q)) {
-          out.push({
-            id: `task-${task.id}`,
-            category: "task",
-            title: task.title,
-            subtitle: `${task.status} - ${task.priority}`,
-            icon: <CheckSquare size={16} />,
-            action: () => {
-              onNavigate("tasks")
-              onSelectTask(task.id)
-              onClose()
-            },
-          })
-        }
-      }
+    // Tasks (server-side full-text search)
+    for (const task of serverResults.tasks) {
+      out.push({
+        id: `task-${task.id}`,
+        category: "task",
+        title: task.title,
+        subtitle: `${task.status} - ${task.priority}`,
+        icon: <CheckSquare size={16} />,
+        action: () => {
+          onNavigate("tasks")
+          onSelectTask(task.id)
+          onClose()
+        },
+      })
     }
 
-    // Goals
-    if (q) {
-      for (const goal of goals) {
-        if (goal.title.toLowerCase().includes(q)) {
-          out.push({
-            id: `goal-${goal.id}`,
-            category: "goal",
-            title: goal.title,
-            subtitle: goal.status || "Goal",
-            icon: <Target size={16} />,
-            action: () => {
-              onNavigate("goals")
-              onClose()
-            },
-          })
-        }
-      }
+    // Goals (server-side)
+    for (const goal of serverResults.goals) {
+      out.push({
+        id: `goal-${goal.id}`,
+        category: "goal",
+        title: goal.title,
+        subtitle: goal.status || "Goal",
+        icon: <Target size={16} />,
+        action: () => {
+          onNavigate("goals")
+          onClose()
+        },
+      })
     }
 
-    // Routines
-    if (q) {
-      for (const routine of routines) {
-        if (routine.name.toLowerCase().includes(q)) {
-          out.push({
-            id: `routine-${routine.id}`,
-            category: "routine",
-            title: routine.name,
-            subtitle: routine.status || "Routine",
-            icon: <Repeat size={16} />,
-            action: () => {
-              onNavigate("routines")
-              onClose()
-            },
-          })
-        }
-      }
+    // Routines (server-side)
+    for (const routine of serverResults.routines) {
+      out.push({
+        id: `routine-${routine.id}`,
+        category: "routine",
+        title: routine.name,
+        subtitle: routine.status || "Routine",
+        icon: <Repeat size={16} />,
+        action: () => {
+          onNavigate("routines")
+          onClose()
+        },
+      })
     }
 
-    return out.slice(0, 20) // cap at 20
-  }, [query, agents, tasks, goals, routines, onNavigate, onSelectAgent, onSelectTask, onClose])
+    return out.slice(0, 25)
+  }, [query, agents, serverResults, onNavigate, onSelectAgent, onSelectTask, onClose])
 
   // Reset selection when results change
   useEffect(() => {
