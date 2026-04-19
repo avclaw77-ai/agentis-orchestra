@@ -260,8 +260,6 @@ export function SearchModal({
     el?.scrollIntoView({ block: "nearest" })
   }, [selectedIndex])
 
-  if (!open) return null
-
   // Group results by category and build flat index map
   const grouped = useMemo(() => {
     const map = new Map<ResultCategory, SearchResult[]>()
@@ -284,6 +282,8 @@ export function SearchModal({
     }
     return map
   }, [grouped])
+
+  if (!open) return null
 
   const CATEGORY_LABELS: Record<ResultCategory, string> = {
     navigation: "Navigation",
