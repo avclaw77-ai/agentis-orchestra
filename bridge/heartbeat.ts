@@ -199,11 +199,19 @@ class HeartbeatEngine {
         const { _sql } = await import("./db.js")
         const sql = _sql()
         if (sql) {
-          const [cfg] = await sql`SELECT model, tool_permissions, persona FROM agent_configs WHERE agent_id = ${agentId} LIMIT 1`
+          const [cfg] = await sql`SELECT model, tool_permissions, persona, connection_config FROM agent_configs WHERE agent_id = ${agentId} LIMIT 1`
           if (cfg) {
             if (!agentConfigModel && cfg.model) agentConfigModel = cfg.model as string
             if (cfg.tool_permissions) agentToolPermissions = cfg.tool_permissions as string[]
             if (cfg.persona) agentPersona = cfg.persona as string
+            // Inject connector credentials into persona context
+            if (cfg.connection_config) {
+              try {
+                const connConfig = JSON.parse(cfg.connection_config as string)
+                const connContext = `\n\n## System Integration\nYou have access to the following connection:\nType: ${connConfig.connectorType || "unknown"}\nConfig: ${JSON.stringify(connConfig, null, 2)}\nUse these credentials when making API calls or database queries.`
+                agentPersona = (agentPersona || "") + connContext
+              } catch { /* invalid JSON, skip */ }
+            }
           }
           // Load org-level model governance
           const [co] = await sql`SELECT settings FROM company WHERE id = 'default' LIMIT 1`
