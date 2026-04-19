@@ -20,7 +20,7 @@ The simplest path. Everything runs in containers.
 
 ```bash
 # 1. Clone
-git clone https://github.com/avclaw77-ai/AgentisOrchestra.git
+git clone https://github.com/AgentisLab/AgentisOrchestra.git
 cd agentis-orchestra
 
 # 2. Generate secrets
@@ -168,7 +168,7 @@ docker compose version
 ```bash
 cd /opt
 sudo mkdir agentis-orchestra && sudo chown orchestra:orchestra agentis-orchestra
-git clone https://github.com/avclaw77-ai/AgentisOrchestra.git agentis-orchestra
+git clone https://github.com/AgentisLab/AgentisOrchestra.git agentis-orchestra
 cd agentis-orchestra
 
 # Generate secrets
@@ -490,7 +490,7 @@ claude -p "say hello" --output-format json
 
 ```bash
 cd /opt  # or ~/Orchestra
-git clone https://github.com/avclaw77-ai/AgentisOrchestra.git
+git clone https://github.com/AgentisLab/AgentisOrchestra.git
 cd AgentisOrchestra
 make setup  # generates .env with secrets
 

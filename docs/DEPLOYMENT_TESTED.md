@@ -35,7 +35,7 @@ systemctl enable docker && systemctl start docker
 ## Step 2: Clone and Configure
 
 ```bash
-git clone https://github.com/avclaw77-ai/AgentisOrchestra.git /opt/agentis-orchestra
+git clone https://github.com/AgentisLab/AgentisOrchestra.git /opt/agentis-orchestra
 cd /opt/agentis-orchestra
 make setup    # generates .env with random secrets
 ```
