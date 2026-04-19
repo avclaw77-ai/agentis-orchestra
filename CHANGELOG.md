@@ -2,6 +2,46 @@
 
 All notable changes to AgentisOrchestra are documented here.
 
+## [1.0.1] -- 2026-04-19
+
+### Platform Readiness
+
+**Critical install fixes (100% of fresh installs would have failed):**
+- Auto-migration: `entrypoint.sh` runs `drizzle-kit push` before server start
+- ENCRYPTION_KEY: `.env.example` placeholder now matches `setup.sh` sed pattern
+- Setup lockout: handles "user exists but setup incomplete" state (no more 403 deadlock)
+
+**Error handling (13 issues fixed across 9 API files):**
+- Auth route: try/catch on all DB operations
+- Tasks: title 500 char limit, notes 5000 char limit, status enum validation
+- Conversations: agent existence check before create
+- Agents DELETE: existence check with 404
+- Company import: admin-only check
+- Users GET: auth guard added (was unauthenticated)
+- Chat: bridge unreachable returns 503 (was unhandled crash)
+- Attachments: task ID format validation (path traversal prevention)
+- Providers: encrypt() try/catch
+
+**Performance:**
+- LIMIT added to 6 unbounded queries (approvals, goals, comments, skills, routines)
+
+**Install polish:**
+- AUTH_TOKEN added to `.env.example`
+- `setup.sh` success message matches README
+- `plugins/.gitkeep` added to repo
+- `.env.example` included in public repo (was excluded by rsync)
+- Dockerfile: uploads directory created for task attachments
+
+**Repo cleanup:**
+- Removed site prototypes and marketing content from `design/`
+- Platform repo contains only platform code and technical design docs
+
+### Tests
+- 69/69 automated tests green (29 Soul Engine + 40 Runtime)
+- 10/10 edge case tests green (long strings, special chars, path traversal, unauth)
+- 102/104 auth handlers verified (2 intentionally public)
+- Fresh install simulation verified from clean clone
+
 ## [1.0.0] -- 2026-04-18
 
 ### Soul Engine -- Agents that get better over time
