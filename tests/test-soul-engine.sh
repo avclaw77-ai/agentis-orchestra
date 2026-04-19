@@ -386,3 +386,19 @@ echo "==========================================="
 rm -f "$COOKIE_FILE"
 
 exit $FAIL
+
+# =============================================================================
+# Phase 9: Server-Side Search
+# =============================================================================
+
+echo -e "${YELLOW}[PHASE 9] Server-Side Search${NC}"
+
+SEARCH_RES=$(api GET "/api/search?q=QA&limit=5")
+SEARCH_TOTAL=$(echo "$SEARCH_RES" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('total',0))" 2>/dev/null || echo "0")
+assert_gte "$SEARCH_TOTAL" "1" "Search API returns results for 'QA'"
+
+SEARCH_EMPTY=$(api GET "/api/search?q=xyznonexistent999")
+SEARCH_EMPTY_TOTAL=$(echo "$SEARCH_EMPTY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('total',0))" 2>/dev/null || echo "0")
+assert_eq "$SEARCH_EMPTY_TOTAL" "0" "Search returns 0 for non-matching query"
+
+echo ""
