@@ -29,6 +29,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=studio:studio /app/.next/standalone ./
 COPY --from=builder --chown=studio:studio /app/.next/static ./.next/static
 
+# Writable directories for uploads and attachments
+RUN mkdir -p /app/uploads/task-attachments && chown -R studio:studio /app/uploads
+
 USER studio
 EXPOSE 3000
 CMD ["node", "server.js"]
