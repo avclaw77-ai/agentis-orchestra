@@ -24,20 +24,28 @@ export async function POST(req: NextRequest) {
   }
 
   // Proxy to bridge
-  const bridgeRes = await fetch(`${BRIDGE_URL}/chat`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(BRIDGE_TOKEN ? { Authorization: `Bearer ${BRIDGE_TOKEN}` } : {}),
-    },
-    body: JSON.stringify({
-      channel,
-      message,
-      departmentId: departmentId || null,
-      conversationId: conversationId || null,
-      modelOverride: modelOverride || null,
-    }),
-  })
+  let bridgeRes: Response
+  try {
+    bridgeRes = await fetch(`${BRIDGE_URL}/chat`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(BRIDGE_TOKEN ? { Authorization: `Bearer ${BRIDGE_TOKEN}` } : {}),
+      },
+      body: JSON.stringify({
+        channel,
+        message,
+        departmentId: departmentId || null,
+        conversationId: conversationId || null,
+        modelOverride: modelOverride || null,
+      }),
+    })
+  } catch {
+    return new Response(
+      JSON.stringify({ error: "Bridge unreachable" }),
+      { status: 503, headers: { "Content-Type": "application/json" } }
+    )
+  }
 
   if (!bridgeRes.ok || !bridgeRes.body) {
     return new Response(

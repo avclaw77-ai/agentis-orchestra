@@ -49,7 +49,7 @@ else
 fi
 
 echo ""
-echo "Ready. Run: docker compose up"
+echo "Ready. Run: make up"
 echo ""
 echo "  App:    http://localhost:3000"
 echo "  Bridge: http://localhost:3847"

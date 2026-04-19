@@ -9,6 +9,9 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const caller = await getSessionUser()
+  if (!caller) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+
   const { id } = await params
 
   const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1)
@@ -40,6 +43,12 @@ export async function PATCH(
   if (caller.role !== "admin") return NextResponse.json({ error: "Admin required" }, { status: 403 })
 
   const { id } = await params
+
+  const [existing] = await db.select().from(users).where(eq(users.id, id)).limit(1)
+  if (!existing) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 })
+  }
+
   const body = await req.json()
   const { role, departmentIds, name } = body
 

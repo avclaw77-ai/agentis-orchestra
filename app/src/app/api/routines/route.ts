@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
     .from(routines)
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(routines.updatedAt))
+    .limit(100)
 
   // Enrich with triggers, step count, and recent run count
   const enriched = await Promise.all(

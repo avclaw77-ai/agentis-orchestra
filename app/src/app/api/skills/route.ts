@@ -20,6 +20,7 @@ export async function GET(req: NextRequest) {
     .from(companySkills)
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(companySkills.updatedAt))
+    .limit(200)
 
   return NextResponse.json(rows)
 }

@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
     .from(goals)
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(goals.createdAt))
+    .limit(200)
 
   return NextResponse.json(rows)
 }

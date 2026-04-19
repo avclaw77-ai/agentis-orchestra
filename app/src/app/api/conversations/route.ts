@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/db"
-import { conversations, chatMessages } from "@/db/schema"
+import { conversations, chatMessages, agents } from "@/db/schema"
 import { eq, desc, and, sql } from "drizzle-orm"
 import { getSessionUser } from "@/lib/auth"
 
@@ -44,6 +44,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "agentId is required" }, { status: 400 })
   }
 
+  try {
+  // Verify agent exists
+  const [agent] = await db.select({ id: agents.id }).from(agents).where(eq(agents.id, agentId)).limit(1)
+  if (!agent) {
+    return NextResponse.json({ error: "Agent not found" }, { status: 404 })
+  }
+
   const id = crypto.randomUUID()
   const now = new Date()
 
@@ -57,6 +64,9 @@ export async function POST(req: NextRequest) {
   })
 
   return NextResponse.json({ id, agentId, departmentId, title: title || "New conversation", createdAt: now, updatedAt: now })
+  } catch {
+    return NextResponse.json({ error: "Failed to create conversation" }, { status: 500 })
+  }
 }
 
 // PATCH /api/conversations -- rename conversation

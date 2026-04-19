@@ -23,6 +23,7 @@ export async function GET(
     .from(approvalComments)
     .where(eq(approvalComments.approvalId, approvalId))
     .orderBy(asc(approvalComments.createdAt))
+    .limit(100)
 
   return NextResponse.json(rows)
 }

@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
     .from(approvalRequests)
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(approvalRequests.createdAt))
+    .limit(200)
 
   return NextResponse.json(rows)
 }

@@ -29,9 +29,19 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=studio:studio /app/.next/standalone ./
 COPY --from=builder --chown=studio:studio /app/.next/static ./.next/static
 
+# Include migration support (drizzle schema + config)
+COPY --from=builder --chown=studio:studio /app/src/db ./src/db
+COPY --from=builder --chown=studio:studio /app/drizzle.config.ts ./drizzle.config.ts
+COPY --from=builder --chown=studio:studio /app/node_modules/drizzle-kit ./node_modules/drizzle-kit
+COPY --from=builder --chown=studio:studio /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
+
+# Entrypoint script (runs migrations then starts server)
+COPY --chown=studio:studio entrypoint.sh ./entrypoint.sh
+RUN chmod +x entrypoint.sh
+
 # Writable directories for uploads and attachments
 RUN mkdir -p /app/uploads/task-attachments && chown -R studio:studio /app/uploads
 
 USER studio
 EXPOSE 3000
-CMD ["node", "server.js"]
+CMD ["./entrypoint.sh"]

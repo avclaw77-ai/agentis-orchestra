@@ -44,12 +44,19 @@ export async function POST(req: NextRequest) {
     .where(eq(providerKeys.provider, provider))
     .limit(1)
 
+  let encrypted: string
+  try {
+    encrypted = encrypt(apiKey.trim())
+  } catch {
+    return NextResponse.json({ error: "Encryption configuration error" }, { status: 500 })
+  }
+
   if (existing.length > 0) {
     // Update existing key
     await db
       .update(providerKeys)
       .set({
-        apiKeyEncrypted: encrypt(apiKey.trim()),
+        apiKeyEncrypted: encrypted,
         isValid: true,
         testedAt: now,
       })
@@ -60,7 +67,7 @@ export async function POST(req: NextRequest) {
     // Insert new key
     await db.insert(providerKeys).values({
       provider,
-      apiKeyEncrypted: encrypt(apiKey.trim()),
+      apiKeyEncrypted: encrypted,
       isValid: true,
       testedAt: now,
     })

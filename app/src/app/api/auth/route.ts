@@ -15,17 +15,42 @@ const COOKIE_NAME = "ao_session"
 
 /** POST /api/auth -- login or create first user */
 export async function POST(req: NextRequest) {
+  try {
   const body = await req.json()
   const { action, email, password, name } = body
 
   if (action === "register") {
-    // Only allow registration if no users exist (first-run setup)
+    // Allow registration if: no users exist, OR users exist but setup never completed
+    // (handles the case where admin was created but setup API failed mid-way)
     const existing = await db.select().from(users).limit(1)
     if (existing.length > 0) {
-      return NextResponse.json(
-        { error: "Registration disabled. Users already exist." },
-        { status: 403 }
-      )
+      // Check if setup was actually completed
+      const { company } = await import("@/db/schema")
+      const [co] = await db.select().from(company).where(eq(company.id, "default")).limit(1)
+      if (co?.setupCompletedAt) {
+        return NextResponse.json(
+          { error: "Registration disabled. Setup already completed." },
+          { status: 403 }
+        )
+      }
+      // Setup incomplete -- allow re-entry by logging in as existing user instead
+      const [existingUser] = await db.select().from(users).where(eq(users.email, email)).limit(1)
+      if (existingUser) {
+        // User exists from a previous failed setup attempt -- log them in instead
+        const validPw = await verifyPassword(password, existingUser.passwordHash)
+        if (!validPw) {
+          return NextResponse.json({ error: "User already exists. Try logging in." }, { status: 409 })
+        }
+        // Auto-login the existing user
+        const token = generateSessionToken()
+        const tokenHash = hashToken(token)
+        const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000)
+        await db.insert(sessions).values({ id: generateId("sess"), userId: existingUser.id, tokenHash, expiresAt })
+        const res = NextResponse.json({ user: { id: existingUser.id, email: existingUser.email, name: existingUser.name, role: existingUser.role } })
+        res.cookies.set(COOKIE_NAME, token, { httpOnly: true, secure: process.env.SECURE_COOKIES === "true", sameSite: "lax", path: "/", maxAge: SESSION_DAYS * 24 * 60 * 60 })
+        res.cookies.set("ao_setup_done", "1", { httpOnly: false, path: "/", maxAge: 365 * 24 * 60 * 60 })
+        return res
+      }
     }
 
     if (!email || !password || !name) {
@@ -127,10 +152,14 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ error: "Invalid action" }, { status: 400 })
+  } catch {
+    return NextResponse.json({ error: "Authentication service unavailable" }, { status: 500 })
+  }
 }
 
 /** GET /api/auth -- check current session */
 export async function GET(req: NextRequest) {
+  try {
   const token = req.cookies.get(COOKIE_NAME)?.value
   if (!token) {
     return NextResponse.json({ user: null }, { status: 401 })
@@ -157,4 +186,7 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ user })
+  } catch {
+    return NextResponse.json({ error: "Authentication service unavailable" }, { status: 500 })
+  }
 }

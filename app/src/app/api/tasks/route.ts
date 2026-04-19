@@ -66,6 +66,20 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  if (typeof title === "string" && title.length > 500) {
+    return NextResponse.json(
+      { error: "title must be 500 characters or fewer" },
+      { status: 400 }
+    )
+  }
+
+  if (notes && typeof notes === "string" && notes.length > 5000) {
+    return NextResponse.json(
+      { error: "notes must be 5000 characters or fewer" },
+      { status: 400 }
+    )
+  }
+
   // Auto-generate ID: TASK-NNN with collision retry (max 5 attempts, then timestamp fallback)
   let id: string = `TASK-${Date.now().toString(36).toUpperCase()}`
   try {
@@ -133,6 +147,14 @@ export async function PATCH(req: NextRequest) {
   const [current] = await db.select().from(tasks).where(eq(tasks.id, id))
   if (!current) {
     return NextResponse.json({ error: "task not found" }, { status: 404 })
+  }
+
+  const allowedStatuses = ["backlog", "in-progress", "review", "done"]
+  if (status !== undefined && !allowedStatuses.includes(status)) {
+    return NextResponse.json(
+      { error: `Invalid status. Allowed values: ${allowedStatuses.join(", ")}` },
+      { status: 400 }
+    )
   }
 
   const updates: Record<string, unknown> = { updatedAt: new Date() }

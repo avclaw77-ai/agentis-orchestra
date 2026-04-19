@@ -19,6 +19,7 @@ import { getSessionUser } from "@/lib/auth"
 export async function POST(req: NextRequest) {
   const user = await getSessionUser()
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+  if (user.role !== "admin") return NextResponse.json({ error: "Admin required" }, { status: 403 })
 
   const template = await req.json()
 

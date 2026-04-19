@@ -55,11 +55,21 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  try {
   const user = await getSessionUser()
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   if (user.role !== "admin") return NextResponse.json({ error: "Admin required" }, { status: 403 })
 
   const { id } = await params
+
+  const [existing] = await db.select().from(agents).where(eq(agents.id, id)).limit(1)
+  if (!existing) {
+    return NextResponse.json({ error: "Agent not found" }, { status: 404 })
+  }
+
   await db.delete(agents).where(eq(agents.id, id))
   return NextResponse.json({ deleted: id })
+  } catch {
+    return NextResponse.json({ error: "Failed to delete agent" }, { status: 500 })
+  }
 }

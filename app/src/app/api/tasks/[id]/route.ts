@@ -45,6 +45,15 @@ export async function PATCH(
   }
 
   const { title, status, assignedTo, priority, phase, notes, project, dependencies } = body
+
+  const allowedStatuses = ["backlog", "in-progress", "review", "done"]
+  if (status !== undefined && !allowedStatuses.includes(status)) {
+    return NextResponse.json(
+      { error: `Invalid status. Allowed values: ${allowedStatuses.join(", ")}` },
+      { status: 400 }
+    )
+  }
+
   const updates: Record<string, unknown> = { updatedAt: new Date() }
   if (title !== undefined) updates.title = title
   if (status !== undefined) updates.status = status

@@ -36,6 +36,14 @@ export async function POST(
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
 
   const { id } = await params
+
+  if (!/^TASK-[A-Z0-9]+$/i.test(id)) {
+    return NextResponse.json(
+      { error: "Invalid task ID format" },
+      { status: 400 }
+    )
+  }
+
   const body = await req.json()
   const { filename, content, mimeType, size } = body
 

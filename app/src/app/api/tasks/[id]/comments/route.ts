@@ -19,6 +19,7 @@ export async function GET(
     .from(taskComments)
     .where(eq(taskComments.taskId, id))
     .orderBy(asc(taskComments.createdAt))
+    .limit(100)
 
   return NextResponse.json(comments)
 }
