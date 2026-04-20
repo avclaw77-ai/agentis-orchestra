@@ -80,43 +80,62 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // Auto-generate ID: TASK-NNN with collision retry (max 5 attempts, then timestamp fallback)
+  // Auto-generate ID: try sequential TASK-NNN, fall back to timestamp on collision
+  const now = new Date()
   let id: string = `TASK-${Date.now().toString(36).toUpperCase()}`
+  let inserted = false
+
+  // Attempt 1: sequential ID
   try {
     const countResult = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(tasks)
     const baseNum = (countResult[0]?.count || 0) + 1
-    for (let attempt = 0; attempt < 5; attempt++) {
-      const candidate = `TASK-${String(baseNum + attempt).padStart(3, "0")}`
-      const existing = await db.select({ id: tasks.id }).from(tasks).where(eq(tasks.id, candidate)).limit(1)
-      if (existing.length === 0) {
-        id = candidate
-        break
-      }
-    }
+    id = `TASK-${String(baseNum).padStart(3, "0")}`
+
+    await db.insert(tasks).values({
+      id,
+      departmentId: departmentId || null,
+      title,
+      status: "backlog",
+      assignedTo: assignedTo || null,
+      project: project || null,
+      priority: priority || "medium",
+      phase: phase || null,
+      notes: notes || null,
+      dueDate: dueDate ? new Date(dueDate) : null,
+      parentTaskId: parentTaskId || null,
+      estimatedTokens: estimatedTokens || null,
+      dependencies: Array.isArray(dependencies) ? dependencies : null,
+      createdAt: now,
+      updatedAt: now,
+    })
+    inserted = true
   } catch {
-    // fallback already set
+    // PK collision under concurrent inserts -- fall back to timestamp ID
   }
 
-  const now = new Date()
-  await db.insert(tasks).values({
-    id,
-    departmentId: departmentId || null,
-    title,
-    status: "backlog",
-    assignedTo: assignedTo || null,
-    project: project || null,
-    priority: priority || "medium",
-    phase: phase || null,
-    notes: notes || null,
-    dueDate: dueDate ? new Date(dueDate) : null,
-    parentTaskId: parentTaskId || null,
-    estimatedTokens: estimatedTokens || null,
-    dependencies: Array.isArray(dependencies) ? dependencies : null,
-    createdAt: now,
-    updatedAt: now,
-  })
+  // Attempt 2: timestamp-based ID (guaranteed unique)
+  if (!inserted) {
+    id = `TASK-${Date.now().toString(36).toUpperCase()}`
+    await db.insert(tasks).values({
+      id,
+      departmentId: departmentId || null,
+      title,
+      status: "backlog",
+      assignedTo: assignedTo || null,
+      project: project || null,
+      priority: priority || "medium",
+      phase: phase || null,
+      notes: notes || null,
+      dueDate: dueDate ? new Date(dueDate) : null,
+      parentTaskId: parentTaskId || null,
+      estimatedTokens: estimatedTokens || null,
+      dependencies: Array.isArray(dependencies) ? dependencies : null,
+      createdAt: now,
+      updatedAt: now,
+    })
+  }
 
   // Log activity
   await db.insert(activityLog).values({
