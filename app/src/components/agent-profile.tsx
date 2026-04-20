@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { X, Save, Plus, X as XIcon, Sparkles, Loader2, Play, Zap } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -153,19 +153,7 @@ export function AgentProfile({
     setToolPermissions(config?.toolPermissions || [])
   }, [config])
 
-  // Fetch runs when switching to runs tab
-  useEffect(() => {
-    if (tab === "runs" && !runsLoaded) {
-      fetchRuns()
-    }
-  }, [tab, runsLoaded])
-
-  // Fetch runtime stats on mount
-  useEffect(() => {
-    fetchRuntimeStats()
-  }, [agent.id])
-
-  async function fetchRuns() {
+  const fetchRuns = useCallback(async () => {
     try {
       const res = await fetch(`/api/agents/${agent.id}/runs?limit=50`)
       if (res.ok) {
@@ -176,9 +164,9 @@ export function AgentProfile({
     } catch {
       // Runs will load once available
     }
-  }
+  }, [agent.id])
 
-  async function fetchRuntimeStats() {
+  const fetchRuntimeStats = useCallback(async () => {
     try {
       const res = await fetch(`/api/agents/${agent.id}/stats`)
       if (res.ok) {
@@ -187,7 +175,19 @@ export function AgentProfile({
     } catch {
       // Stats will be available once agent has run
     }
-  }
+  }, [agent.id])
+
+  // Fetch runs when switching to runs tab
+  useEffect(() => {
+    if (tab === "runs" && !runsLoaded) {
+      fetchRuns()
+    }
+  }, [tab, runsLoaded, fetchRuns])
+
+  // Fetch runtime stats on mount
+  useEffect(() => {
+    fetchRuntimeStats()
+  }, [fetchRuntimeStats])
 
   function handleAddDataSource() {
     const val = newDataSource.trim()

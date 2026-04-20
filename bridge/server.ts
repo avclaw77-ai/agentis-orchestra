@@ -111,76 +111,81 @@ app.post("/chat/cancel", (req, res) => {
 
 // Model registry + provider status
 app.get("/models", async (_req, res) => {
-  const providerStatus: { provider: Provider; name: string; configured: boolean; mode: string; description: string; color: string }[] = [
-    {
-      provider: "claude-cli",
-      name: "Claude (CLI)",
-      configured: true,
-      mode: "cli",
-      description: "Pro subscription -- flat monthly cost, included in sub",
-      color: "#d97706",
-    },
-    {
-      provider: "openrouter",
-      name: "OpenRouter",
-      configured: !!process.env.OPENROUTER_API_KEY,
-      mode: "api",
-      description: "100+ models -- GPT, Gemini, Llama, DeepSeek, Qwen, and more",
-      color: "#6366f1",
-    },
-    {
-      provider: "perplexity",
-      name: "Perplexity",
-      configured: !!process.env.PERPLEXITY_API_KEY,
-      mode: "api",
-      description: "Web search with citations -- research and fact-checking",
-      color: "#0ea5e9",
-    },
-    {
-      provider: "openai",
-      name: "OpenAI",
-      configured: !!process.env.OPENAI_API_KEY,
-      mode: "api",
-      description: "GPT-5.4 family, o-series -- reasoning and structured output",
-      color: "#10b981",
-    },
-  ]
+  try {
+    const providerStatus: { provider: Provider; name: string; configured: boolean; mode: string; description: string; color: string }[] = [
+      {
+        provider: "claude-cli",
+        name: "Claude (CLI)",
+        configured: true,
+        mode: "cli",
+        description: "Pro subscription -- flat monthly cost, included in sub",
+        color: "#d97706",
+      },
+      {
+        provider: "openrouter",
+        name: "OpenRouter",
+        configured: !!process.env.OPENROUTER_API_KEY,
+        mode: "api",
+        description: "100+ models -- GPT, Gemini, Llama, DeepSeek, Qwen, and more",
+        color: "#6366f1",
+      },
+      {
+        provider: "perplexity",
+        name: "Perplexity",
+        configured: !!process.env.PERPLEXITY_API_KEY,
+        mode: "api",
+        description: "Web search with citations -- research and fact-checking",
+        color: "#0ea5e9",
+      },
+      {
+        provider: "openai",
+        name: "OpenAI",
+        configured: !!process.env.OPENAI_API_KEY,
+        mode: "api",
+        description: "GPT-5.4 family, o-series -- reasoning and structured output",
+        color: "#10b981",
+      },
+    ]
 
-  // Only return models whose provider is configured
-  const configuredProviders = new Set(
-    providerStatus.filter((p) => p.configured).map((p) => p.provider)
-  )
-  const availableModels = MODEL_REGISTRY.filter((m) =>
-    configuredProviders.has(m.provider)
-  )
+    // Only return models whose provider is configured
+    const configuredProviders = new Set(
+      providerStatus.filter((p) => p.configured).map((p) => p.provider)
+    )
+    const availableModels = MODEL_REGISTRY.filter((m) =>
+      configuredProviders.has(m.provider)
+    )
 
-  // For OpenAI: also fetch live model list from API to show all available models
-  let liveOpenAIModels: string[] = []
-  if (process.env.OPENAI_API_KEY) {
-    try {
-      const apiRes = await fetch("https://api.openai.com/v1/models", {
-        headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-        signal: AbortSignal.timeout(5_000),
-      })
-      if (apiRes.ok) {
-        const data = await apiRes.json()
-        const exclude = ["embedding", "tts", "whisper", "dall-e", "moderation", "babbage", "davinci", "text-"]
-        liveOpenAIModels = (data?.data || [])
-          .map((m: { id: string }) => m.id)
-          .filter((id: string) => !exclude.some((p) => id.includes(p)))
-          .sort()
+    // For OpenAI: also fetch live model list from API to show all available models
+    let liveOpenAIModels: string[] = []
+    if (process.env.OPENAI_API_KEY) {
+      try {
+        const apiRes = await fetch("https://api.openai.com/v1/models", {
+          headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+          signal: AbortSignal.timeout(5_000),
+        })
+        if (apiRes.ok) {
+          const data = await apiRes.json()
+          const exclude = ["embedding", "tts", "whisper", "dall-e", "moderation", "babbage", "davinci", "text-"]
+          liveOpenAIModels = (data?.data || [])
+            .map((m: { id: string }) => m.id)
+            .filter((id: string) => !exclude.some((p) => id.includes(p)))
+            .sort()
+        }
+      } catch {
+        // Live fetch failed, use registry only
       }
-    } catch {
-      // Live fetch failed, use registry only
     }
-  }
 
-  res.json({
-    providers: providerStatus,
-    models: availableModels,
-    liveOpenAIModels,
-    heartbeatStatus: heartbeatEngine.isRunning(),
-  })
+    res.json({
+      providers: providerStatus,
+      models: availableModels,
+      liveOpenAIModels,
+      heartbeatStatus: heartbeatEngine.isRunning(),
+    })
+  } catch (err) {
+    console.error("[bridge] /models error:", err)
+    res.status(500).json({ error: "Internal error" })
+  }
 })
 
 // =============================================================================
@@ -189,23 +194,33 @@ app.get("/models", async (_req, res) => {
 
 // List heartbeat runs for an agent
 app.get("/agents/:id/runs", async (req, res) => {
-  const runs = await db.getRunsByAgent(req.params.id)
-  res.json({ runs })
+  try {
+    const runs = await db.getRunsByAgent(req.params.id)
+    res.json({ runs })
+  } catch (err) {
+    console.error("[bridge] /agents/:id/runs error:", err)
+    res.status(500).json({ error: "Internal error" })
+  }
 })
 
 // Manual trigger for an agent
 app.post("/agents/:id/trigger", async (req, res) => {
-  const { prompt, departmentId } = req.body
-  if (!prompt) {
-    res.status(400).json({ error: "prompt required" })
-    return
+  try {
+    const { prompt, departmentId } = req.body
+    if (!prompt) {
+      res.status(400).json({ error: "prompt required" })
+      return
+    }
+    const wakeupId = await heartbeatEngine.triggerManual(
+      req.params.id,
+      prompt,
+      departmentId
+    )
+    res.json({ wakeupId, status: "queued" })
+  } catch (err) {
+    console.error("[bridge] /agents/:id/trigger error:", err)
+    res.status(500).json({ error: "Internal error" })
   }
-  const wakeupId = await heartbeatEngine.triggerManual(
-    req.params.id,
-    prompt,
-    departmentId
-  )
-  res.json({ wakeupId, status: "queued" })
 })
 
 // Get a single run's details
@@ -515,20 +530,30 @@ app.post("/routines/:id/trigger", async (req, res) => {
 
 // List runs for a routine
 app.get("/routines/:id/runs", async (req, res) => {
-  const limit = parseInt(req.query.limit as string || "50", 10)
-  const offset = parseInt(req.query.offset as string || "0", 10)
-  const runs = await db.getRoutineRunsByRoutine(req.params.id, limit, offset)
-  res.json({ runs })
+  try {
+    const limit = parseInt(req.query.limit as string || "50", 10)
+    const offset = parseInt(req.query.offset as string || "0", 10)
+    const runs = await db.getRoutineRunsByRoutine(req.params.id, limit, offset)
+    res.json({ runs })
+  } catch (err) {
+    console.error("[bridge] /routines/:id/runs error:", err)
+    res.status(500).json({ error: "Internal error" })
+  }
 })
 
 // Get a single routine run with step results
 app.get("/routine-runs/:id", async (req, res) => {
-  const run = await db.getRoutineRunById(req.params.id)
-  if (!run) {
-    res.status(404).json({ error: "Run not found" })
-    return
+  try {
+    const run = await db.getRoutineRunById(req.params.id)
+    if (!run) {
+      res.status(404).json({ error: "Run not found" })
+      return
+    }
+    res.json({ run })
+  } catch (err) {
+    console.error("[bridge] /routine-runs/:id error:", err)
+    res.status(500).json({ error: "Internal error" })
   }
-  res.json({ run })
 })
 
 // Notify scheduler to reload (called by app API after routine create/update)

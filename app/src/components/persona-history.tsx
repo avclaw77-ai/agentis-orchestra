@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import {
   Loader2,
   ChevronDown,
@@ -45,11 +45,7 @@ export function PersonaHistory({ agentId }: PersonaHistoryProps) {
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState<number | null>(null)
 
-  useEffect(() => {
-    fetchVersions()
-  }, [agentId])
-
-  async function fetchVersions() {
+  const fetchVersions = useCallback(async () => {
     setLoading(true)
     try {
       const res = await fetch(`/api/agents/${agentId}/persona`)
@@ -65,7 +61,11 @@ export function PersonaHistory({ agentId }: PersonaHistoryProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [agentId])
+
+  useEffect(() => {
+    fetchVersions()
+  }, [fetchVersions])
 
   function toggleExpand(id: number) {
     setExpanded((prev) => (prev === id ? null : id))

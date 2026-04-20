@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import {
   CheckCircle2,
   XCircle,
@@ -50,11 +50,7 @@ export function PersonaProposals({ agentId, agentName }: PersonaProposalsProps) 
   const [loading, setLoading] = useState(true)
   const [actioning, setActioning] = useState<number | null>(null)
 
-  useEffect(() => {
-    fetchProposals()
-  }, [agentId])
-
-  async function fetchProposals() {
+  const fetchProposals = useCallback(async () => {
     setLoading(true)
     try {
       const res = await fetch(`/api/agents/${agentId}/proposals?status=pending`)
@@ -67,7 +63,11 @@ export function PersonaProposals({ agentId, agentName }: PersonaProposalsProps) 
     } finally {
       setLoading(false)
     }
-  }
+  }, [agentId])
+
+  useEffect(() => {
+    fetchProposals()
+  }, [fetchProposals])
 
   async function handleAction(proposalId: number, status: "approved" | "rejected" | "deferred") {
     setActioning(proposalId)

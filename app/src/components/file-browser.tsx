@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import {
-  Folder, FileText, FileCode, Image, FileSpreadsheet,
+  Folder, FileText, FileCode, Image as ImageIcon, FileSpreadsheet,
   Download, Eye, ChevronRight, Home, Upload, X, ArrowLeft,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -33,8 +33,8 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   css: <FileCode size={16} className="text-purple-500" />,
   csv: <FileSpreadsheet size={16} className="text-green-600" />,
   xlsx: <FileSpreadsheet size={16} className="text-green-700" />,
-  png: <Image size={16} className="text-pink-500" />,
-  jpg: <Image size={16} className="text-pink-500" />,
+  png: <ImageIcon size={16} className="text-pink-500" />,
+  jpg: <ImageIcon size={16} className="text-pink-500" />,
   pdf: <FileText size={16} className="text-red-500" />,
 }
 

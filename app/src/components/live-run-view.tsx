@@ -75,7 +75,7 @@ export function LiveRunView({ runId, agentId, agentName, onClose }: LiveRunViewP
 
     stream()
     return () => controller.abort()
-  }, [runId])
+  }, [runId, agentId])
 
   // Elapsed timer
   useEffect(() => {
